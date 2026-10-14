@@ -1,0 +1,439 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  useMap,
+} from "react-leaflet";
+
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+import {
+  Home,
+  Map as MapIcon,
+  Plus,
+  Clock3,
+  User,
+  MapPin,
+  LocateFixed,
+} from "lucide-react";
+
+
+const POSITION_TOLIARA = [-23.35, 43.67];
+
+
+function creerIcone(couleur) {
+  return L.divIcon({
+    className: "",
+    html: `
+      <div
+        style="
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          background: ${couleur};
+          border: 4px solid white;
+          box-shadow: 0 4px 12px rgba(0,0,0,.25);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: 900;
+          font-size: 18px;
+        "
+      >
+        !
+      </div>
+    `,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+  });
+}
+
+
+const iconeUtilisateur = L.divIcon({
+  className: "",
+  html: `
+    <div
+      style="
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #1689f8;
+        border: 4px solid white;
+        box-shadow: 0 3px 10px rgba(0,0,0,.3);
+      "
+    ></div>
+  `,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+});
+
+
+const couleursStatut = {
+  A_CONFIRMER: "#ff9f1a",
+  ACTIF: "#ef3f48",
+  RETABLISSEMENT_PROBABLE: "#278cff",
+  RETABLI: "#22b573",
+  REJETE: "#8997a8",
+};
+
+
+function ControleCarte({ destination }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (destination) {
+      map.setView(destination, 16);
+    }
+  }, [destination, map]);
+
+  return null;
+}
+
+
+function Carte() {
+  const navigate = useNavigate();
+
+  const [incidents, setIncidents] = useState([]);
+  const [filtre, setFiltre] = useState("TOUS");
+
+  const [
+    positionUtilisateur,
+    setPositionUtilisateur,
+  ] = useState(null);
+
+  const [
+    destinationCarte,
+    setDestinationCarte,
+  ] = useState(null);
+
+
+  useEffect(() => {
+    const token = localStorage.getItem(
+      "access_token"
+    );
+
+    if (!token) {
+      navigate("/");
+      return;
+    }
+
+    axios
+      .get(
+        "http://127.0.0.1:8000/api/incidents/",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      .then((response) => {
+        setIncidents(response.data);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, [navigate]);
+
+
+  const allerMaPosition = () => {
+    if (!navigator.geolocation) {
+      alert(
+        "La géolocalisation n'est pas disponible."
+      );
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const nouvellePosition = [
+          pos.coords.latitude,
+          pos.coords.longitude,
+        ];
+
+        setPositionUtilisateur(
+          nouvellePosition
+        );
+
+        setDestinationCarte(
+          nouvellePosition
+        );
+      },
+
+      () => {
+        alert(
+          "Impossible de détecter votre position."
+        );
+      },
+
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+      }
+    );
+  };
+
+
+  const retournerToliara = () => {
+    setDestinationCarte(POSITION_TOLIARA);
+  };
+
+
+  const incidentsFiltres =
+    filtre === "TOUS"
+      ? incidents
+      : incidents.filter(
+          (incident) =>
+            incident.statut === filtre
+        );
+
+
+  const afficherStatut = (statut) => {
+    const valeurs = {
+      A_CONFIRMER: "À confirmer",
+      ACTIF: "Coupure confirmée",
+      RETABLISSEMENT_PROBABLE:
+        "Rétablissement probable",
+      RETABLI: "Eau rétablie",
+      REJETE: "Rejeté",
+    };
+
+    return valeurs[statut] || statut;
+  };
+
+
+  return (
+    <main className="app-page">
+      <section className="mobile-app map-page">
+
+        <header className="map-header">
+          <h1>Carte des incidents</h1>
+
+          <p>
+            <MapPin size={18} />
+            Toliara
+          </p>
+        </header>
+
+
+        <div className="map-filters">
+          <button
+            className={
+              filtre === "TOUS"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setFiltre("TOUS")
+            }
+          >
+            Tous
+          </button>
+
+          <button
+            className={
+              filtre === "ACTIF"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setFiltre("ACTIF")
+            }
+          >
+            Actifs
+          </button>
+
+          <button
+            className={
+              filtre === "A_CONFIRMER"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setFiltre("A_CONFIRMER")
+            }
+          >
+            À confirmer
+          </button>
+
+          <button
+            className={
+              filtre === "RETABLI"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setFiltre("RETABLI")
+            }
+          >
+            Rétablis
+          </button>
+        </div>
+
+
+        <div className="map-actions">
+          <button
+            className="my-location-button"
+            onClick={allerMaPosition}
+          >
+            <LocateFixed size={18} />
+            Ma position
+          </button>
+
+          <button
+            className="toliara-button"
+            onClick={retournerToliara}
+          >
+            <MapPin size={18} />
+            Revenir à Toliara
+          </button>
+        </div>
+
+
+        <div className="real-map">
+          <MapContainer
+            center={POSITION_TOLIARA}
+            zoom={14}
+            style={{
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            <TileLayer
+              attribution="&copy; OpenStreetMap contributors"
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+
+
+            <ControleCarte
+              destination={destinationCarte}
+            />
+
+
+            {incidentsFiltres.map(
+              (incident) => (
+                <Marker
+                  key={incident.id}
+                  position={[
+                    Number(
+                      incident.latitude
+                    ),
+                    Number(
+                      incident.longitude
+                    ),
+                  ]}
+                  icon={creerIcone(
+                    couleursStatut[
+                      incident.statut
+                    ] || "#8997a8"
+                  )}
+                >
+                  <Popup>
+                    <div className="map-popup">
+                      <strong>
+                        {afficherStatut(
+                          incident.statut
+                        )}
+                      </strong>
+
+                      <p>
+                        {incident.zone_nom}
+                      </p>
+
+                      <p>
+                        Confiance :{" "}
+                        {
+                          incident.score_confiance
+                        }{" "}
+                        %
+                      </p>
+
+                      <button
+                        onClick={() =>
+                          navigate(
+                            `/incidents/${incident.id}`
+                          )
+                        }
+                      >
+                        Voir les détails
+                      </button>
+                    </div>
+                  </Popup>
+                </Marker>
+              )
+            )}
+
+
+            {positionUtilisateur && (
+              <Marker
+                position={
+                  positionUtilisateur
+                }
+                icon={iconeUtilisateur}
+              >
+                <Popup>
+                  Votre position
+                </Popup>
+              </Marker>
+            )}
+
+          </MapContainer>
+        </div>
+
+
+        <nav className="bottom-nav">
+          <button
+            onClick={() =>
+              navigate("/accueil")
+            }
+          >
+            <Home />
+            <span>Accueil</span>
+          </button>
+
+          <button className="active">
+            <MapIcon />
+            <span>Carte</span>
+          </button>
+
+          <button
+            className="central-button"
+            onClick={() =>
+              navigate("/signaler")
+            }
+          >
+            <Plus />
+            <span>Signaler</span>
+          </button>
+
+          <button
+            onClick={() =>
+              navigate("/historique")
+            }
+          >
+            <Clock3 />
+            <span>Historique</span>
+          </button>
+
+          <button
+            onClick={() =>
+              navigate("/profil")
+            }
+          >
+            <User />
+            <span>Profil</span>
+          </button>
+        </nav>
+
+      </section>
+    </main>
+  );
+}
+
+export default Carte;

@@ -1,0 +1,39 @@
+# Variables d'environnement / secrets
+.env
+.env.*
+!.env.example
+
+# Environnement virtuel Python
+venv/
+.venv/
+env/
+
+# Cache Python
+__pycache__/
+*.py[cod]
+
+# Base SQLite éventuelle
+db.sqlite3
+*.sqlite3
+
+# Django
+staticfiles/
+media/
+
+# Fichiers VS Code
+.vscode/
+.idea/
+
+# Fichiers système Windows
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+
+# Frontend React / Node
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+.vite/
