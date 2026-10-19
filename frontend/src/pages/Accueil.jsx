@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import MiniMap from "../components/MiniMap";
+import { API_BASE_URL } from "../services/apiConfig";
 
 import {
   Droplets,
@@ -38,12 +39,12 @@ function Accueil() {
         const [profilResponse, incidentsResponse] =
           await Promise.all([
             axios.get(
-              "http://127.0.0.1:8000/api/auth/me/",
+              `${API_BASE_URL}/api/auth/me/`,
               { headers }
             ),
 
             axios.get(
-              "http://127.0.0.1:8000/api/incidents/",
+             `${API_BASE_URL}/api/incidents/`,
               { headers }
             ),
           ]);

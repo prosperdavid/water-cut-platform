@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { API_BASE_URL } from "../services/apiConfig";
 
 import {
   ArrowLeft,
@@ -37,9 +38,14 @@ function IncidentDetail() {
   const chargerIncident = async () => {
     try {
       const response = await axios.get(
-        `http://127.0.0.1:8000/api/incidents/${id}/`,
-        { headers }
-      );
+  `${API_BASE_URL}/api/incidents/${id}/`,
+  {
+    headers,
+    params: {
+      _t: Date.now(),
+    },
+  }
+);
 
       setIncident(response.data);
     } catch (error) {
@@ -129,7 +135,7 @@ function IncidentDetail() {
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/confirmations/",
+        `${API_BASE_URL}/api/confirmations/`,
         {
           incident: Number(id),
           type_reponse: typeReponse,

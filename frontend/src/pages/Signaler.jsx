@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import MiniMap from "../components/MiniMap";
+import { API_BASE_URL } from "../services/apiConfig";
 
 import {
   ArrowLeft,
@@ -37,7 +38,7 @@ function Signaler() {
     }
 
     axios
-      .get("http://127.0.0.1:8000/api/zones/", {
+      .get(`${API_BASE_URL}/api/zones/`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -122,7 +123,7 @@ function Signaler() {
       }
 
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/signalements/",
+        `${API_BASE_URL}/api/signalements/`,
         donnees,
         {
           headers: {

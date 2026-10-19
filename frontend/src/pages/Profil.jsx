@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE_URL } from "../services/apiConfig";
 
 import {
   User,
@@ -32,7 +33,7 @@ function Profil() {
 
     axios
       .get(
-        "http://127.0.0.1:8000/api/auth/me/",
+        `${API_BASE_URL}/api/auth/me/`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

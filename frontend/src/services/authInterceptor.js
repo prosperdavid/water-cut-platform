@@ -1,4 +1,5 @@
 import axios from "axios";
+import { API_BASE_URL } from "./apiConfig";
 
 axios.interceptors.response.use(
   (response) => response,
@@ -26,7 +27,7 @@ axios.interceptors.response.use(
 
       try {
         const response = await axios.post(
-          "http://127.0.0.1:8000/api/auth/token/refresh/",
+         `${API_BASE_URL}/api/auth/token/refresh/`,
           {
             refresh: refreshToken,
           }

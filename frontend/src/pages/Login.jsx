@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../services/apiConfig";
 import {
   Droplets,
   User,
@@ -29,7 +30,7 @@ function Login() {
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/auth/login/",
+       `${API_BASE_URL}/api/auth/login/`,
         {
           username,
           password,

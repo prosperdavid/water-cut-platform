@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE_URL } from "../services/apiConfig";
 
 import {
   Home,
@@ -31,7 +32,7 @@ function Historique() {
 
     axios
       .get(
-        "http://127.0.0.1:8000/api/auth/history/",
+       `${API_BASE_URL}/api/auth/history/`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE_URL } from "../services/apiConfig";
 
 import {
   ArrowLeft,
@@ -44,7 +45,7 @@ function Inscription() {
     try {
       // 1. Création du compte
       await axios.post(
-        "http://127.0.0.1:8000/api/auth/register/",
+       `${API_BASE_URL}/api/auth/register/`,
         formulaire
       );
 
@@ -52,7 +53,7 @@ function Inscription() {
 
       // 2. Connexion automatique
       const connexion = await axios.post(
-        "http://127.0.0.1:8000/api/auth/login/",
+       `${API_BASE_URL}/api/auth/login/`,
         {
           username: formulaire.username,
           password: formulaire.password,
