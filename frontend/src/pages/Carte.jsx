@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../services/apiConfig";
+
 import {
   MapContainer,
   TileLayer,
   Marker,
   Popup,
+  Circle,
   useMap,
 } from "react-leaflet";
 
@@ -21,10 +23,15 @@ import {
   User,
   MapPin,
   LocateFixed,
+  LoaderCircle,
 } from "lucide-react";
 
 
 const POSITION_TOLIARA = [-23.35, 43.67];
+
+// Si la précision est supérieure à cette valeur,
+// on considère la position comme trop imprécise.
+const PRECISION_MAX_METRES = 100;
 
 
 function creerIcone(couleur) {
@@ -66,7 +73,7 @@ const iconeUtilisateur = L.divIcon({
         border-radius: 50%;
         background: #1689f8;
         border: 4px solid white;
-        box-shadow: 0 3px 10px rgba(0,0,0,.3);
+        box-shadow: 0 3px 10px rgba(0,0,0,.35);
       "
     ></div>
   `,
@@ -84,14 +91,17 @@ const couleursStatut = {
 };
 
 
-function ControleCarte({ destination }) {
+function ControleCarte({ destination, zoom = 16 }) {
   const map = useMap();
 
   useEffect(() => {
     if (destination) {
-      map.setView(destination, 16);
+      map.flyTo(destination, zoom, {
+        animate: true,
+        duration: 1,
+      });
     }
-  }, [destination, map]);
+  }, [destination, zoom, map]);
 
   return null;
 }
@@ -100,24 +110,29 @@ function ControleCarte({ destination }) {
 function Carte() {
   const navigate = useNavigate();
 
+  const watchIdRef = useRef(null);
+  const timerRef = useRef(null);
+
   const [incidents, setIncidents] = useState([]);
   const [filtre, setFiltre] = useState("TOUS");
 
-  const [
-    positionUtilisateur,
-    setPositionUtilisateur,
-  ] = useState(null);
+  const [positionUtilisateur, setPositionUtilisateur] =
+    useState(null);
 
-  const [
-    destinationCarte,
-    setDestinationCarte,
-  ] = useState(null);
+  const [destinationCarte, setDestinationCarte] =
+    useState(null);
+
+  const [zoomCarte, setZoomCarte] = useState(16);
+
+  const [recherchePosition, setRecherchePosition] =
+    useState(false);
+
+  const [messagePosition, setMessagePosition] =
+    useState("");
 
 
   useEffect(() => {
-    const token = localStorage.getItem(
-      "access_token"
-    );
+    const token = localStorage.getItem("access_token");
 
     if (!token) {
       navigate("/");
@@ -125,14 +140,11 @@ function Carte() {
     }
 
     axios
-      .get(
-       `${API_BASE_URL}/api/incidents/`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
+      .get(`${API_BASE_URL}/api/incidents/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       .then((response) => {
         setIncidents(response.data);
       })
@@ -142,46 +154,203 @@ function Carte() {
   }, [navigate]);
 
 
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(
+          watchIdRef.current
+        );
+      }
+
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
+
+  const arreterRechercheGPS = () => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(
+        watchIdRef.current
+      );
+
+      watchIdRef.current = null;
+    }
+
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+
+    setRecherchePosition(false);
+  };
+
+
+  const traiterPosition = (pos) => {
+    const latitude = pos.coords.latitude;
+    const longitude = pos.coords.longitude;
+    const accuracy = pos.coords.accuracy;
+
+    const nouvellePosition = {
+      latitude,
+      longitude,
+      accuracy,
+    };
+
+
+    // On garde toujours la meilleure précision obtenue.
+    setPositionUtilisateur((anciennePosition) => {
+      if (
+        !anciennePosition ||
+        accuracy < anciennePosition.accuracy
+      ) {
+        return nouvellePosition;
+      }
+
+      return anciennePosition;
+    });
+
+
+    /*
+      Une position très imprécise arrive souvent sur PC,
+      lorsque Chrome utilise le réseau plutôt qu'un vrai GPS.
+    */
+    if (accuracy > PRECISION_MAX_METRES) {
+      setMessagePosition(
+        `Position détectée mais trop imprécise : ±${Math.round(
+          accuracy
+        )} m. Activez le GPS ou utilisez un smartphone.`
+      );
+
+      return;
+    }
+
+
+    setDestinationCarte([latitude, longitude]);
+
+    // Plus la précision est bonne, plus on zoome.
+    if (accuracy <= 20) {
+      setZoomCarte(18);
+    } else if (accuracy <= 50) {
+      setZoomCarte(17);
+    } else {
+      setZoomCarte(16);
+    }
+
+    setMessagePosition(
+      `Position GPS obtenue avec une précision d'environ ±${Math.round(
+        accuracy
+      )} m.`
+    );
+
+
+    /*
+      Lorsque la précision devient excellente,
+      on n'a plus besoin d'attendre d'autres mesures.
+    */
+    if (accuracy <= 20) {
+      arreterRechercheGPS();
+    }
+  };
+
+
   const allerMaPosition = () => {
     if (!navigator.geolocation) {
       alert(
-        "La géolocalisation n'est pas disponible."
+        "La géolocalisation n'est pas disponible sur cet appareil."
       );
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const nouvellePosition = [
-          pos.coords.latitude,
-          pos.coords.longitude,
-        ];
 
-        setPositionUtilisateur(
-          nouvellePosition
-        );
+    // Stoppe une éventuelle recherche précédente.
+    arreterRechercheGPS();
 
-        setDestinationCarte(
-          nouvellePosition
-        );
-      },
-
-      () => {
-        alert(
-          "Impossible de détecter votre position."
-        );
-      },
-
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-      }
+    setRecherchePosition(true);
+    setMessagePosition(
+      "Recherche de votre position GPS..."
     );
+
+
+    watchIdRef.current =
+      navigator.geolocation.watchPosition(
+        traiterPosition,
+
+        (erreur) => {
+          arreterRechercheGPS();
+
+          if (erreur.code === 1) {
+            setMessagePosition(
+              "Accès à la localisation refusé."
+            );
+
+            alert(
+              "Autorisez la localisation précise dans votre navigateur."
+            );
+          } else if (erreur.code === 2) {
+            setMessagePosition(
+              "Votre position n'a pas pu être déterminée."
+            );
+
+            alert(
+              "Activez le GPS de votre appareil puis réessayez."
+            );
+          } else if (erreur.code === 3) {
+            setMessagePosition(
+              "La recherche GPS a pris trop de temps."
+            );
+          } else {
+            setMessagePosition(
+              "Impossible de récupérer votre position."
+            );
+          }
+        },
+
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 20000,
+        }
+      );
+
+
+    /*
+      On laisse quelques secondes au smartphone
+      pour améliorer progressivement la précision.
+    */
+    timerRef.current = setTimeout(() => {
+      arreterRechercheGPS();
+
+      setPositionUtilisateur((position) => {
+        if (!position) {
+          setMessagePosition(
+            "Aucune position GPS fiable n'a été obtenue."
+          );
+
+          return position;
+        }
+
+        if (
+          position.accuracy >
+          PRECISION_MAX_METRES
+        ) {
+          setMessagePosition(
+            `Position trop imprécise : ±${Math.round(
+              position.accuracy
+            )} m. Essayez dehors avec le GPS activé.`
+          );
+        }
+
+        return position;
+      });
+    }, 15000);
   };
 
 
   const retournerToliara = () => {
     setDestinationCarte(POSITION_TOLIARA);
+    setZoomCarte(14);
   };
 
 
@@ -225,26 +394,18 @@ function Carte() {
         <div className="map-filters">
           <button
             className={
-              filtre === "TOUS"
-                ? "active"
-                : ""
+              filtre === "TOUS" ? "active" : ""
             }
-            onClick={() =>
-              setFiltre("TOUS")
-            }
+            onClick={() => setFiltre("TOUS")}
           >
             Tous
           </button>
 
           <button
             className={
-              filtre === "ACTIF"
-                ? "active"
-                : ""
+              filtre === "ACTIF" ? "active" : ""
             }
-            onClick={() =>
-              setFiltre("ACTIF")
-            }
+            onClick={() => setFiltre("ACTIF")}
           >
             Actifs
           </button>
@@ -268,9 +429,7 @@ function Carte() {
                 ? "active"
                 : ""
             }
-            onClick={() =>
-              setFiltre("RETABLI")
-            }
+            onClick={() => setFiltre("RETABLI")}
           >
             Rétablis
           </button>
@@ -281,9 +440,17 @@ function Carte() {
           <button
             className="my-location-button"
             onClick={allerMaPosition}
+            disabled={recherchePosition}
           >
-            <LocateFixed size={18} />
-            Ma position
+            {recherchePosition ? (
+              <LoaderCircle size={18} />
+            ) : (
+              <LocateFixed size={18} />
+            )}
+
+            {recherchePosition
+              ? "Localisation..."
+              : "Ma position"}
           </button>
 
           <button
@@ -294,6 +461,23 @@ function Carte() {
             Revenir à Toliara
           </button>
         </div>
+
+
+        {messagePosition && (
+          <div
+            style={{
+              margin: "8px 0 10px",
+              padding: "10px 12px",
+              borderRadius: "12px",
+              background: "#eef7ff",
+              color: "#315a7d",
+              fontSize: "13px",
+              lineHeight: "1.4",
+            }}
+          >
+            {messagePosition}
+          </div>
+        )}
 
 
         <div className="real-map">
@@ -313,6 +497,7 @@ function Carte() {
 
             <ControleCarte
               destination={destinationCarte}
+              zoom={zoomCarte}
             />
 
 
@@ -321,12 +506,8 @@ function Carte() {
                 <Marker
                   key={incident.id}
                   position={[
-                    Number(
-                      incident.latitude
-                    ),
-                    Number(
-                      incident.longitude
-                    ),
+                    Number(incident.latitude),
+                    Number(incident.longitude),
                   ]}
                   icon={creerIcone(
                     couleursStatut[
@@ -371,16 +552,57 @@ function Carte() {
 
 
             {positionUtilisateur && (
-              <Marker
-                position={
-                  positionUtilisateur
-                }
-                icon={iconeUtilisateur}
-              >
-                <Popup>
-                  Votre position
-                </Popup>
-              </Marker>
+              <>
+                <Circle
+                  center={[
+                    positionUtilisateur.latitude,
+                    positionUtilisateur.longitude,
+                  ]}
+                  radius={
+                    positionUtilisateur.accuracy
+                  }
+                  pathOptions={{
+                    color: "#1689f8",
+                    fillColor: "#1689f8",
+                    fillOpacity: 0.12,
+                    weight: 1,
+                  }}
+                />
+
+                <Marker
+                  position={[
+                    positionUtilisateur.latitude,
+                    positionUtilisateur.longitude,
+                  ]}
+                  icon={iconeUtilisateur}
+                >
+                  <Popup>
+                    <div>
+                      <strong>
+                        Votre position
+                      </strong>
+
+                      <p>
+                        Précision : ±
+                        {Math.round(
+                          positionUtilisateur.accuracy
+                        )}{" "}
+                        m
+                      </p>
+
+                      <small>
+                        {positionUtilisateur.latitude.toFixed(
+                          6
+                        )}
+                        ,{" "}
+                        {positionUtilisateur.longitude.toFixed(
+                          6
+                        )}
+                      </small>
+                    </div>
+                  </Popup>
+                </Marker>
+              </>
             )}
 
           </MapContainer>
