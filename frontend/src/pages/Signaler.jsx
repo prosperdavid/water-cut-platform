@@ -23,13 +23,205 @@ function Signaler() {
   const [zones, setZones] = useState([]);
   const [zoneId, setZoneId] = useState("");
   const [position, setPosition] = useState(null);
+
+  const [quartierDetecte, setQuartierDetecte] = useState("");
+  const [recherchePosition, setRecherchePosition] = useState(false);
+  const [rechercheQuartier, setRechercheQuartier] = useState(false);
+
   const [depuis, setDepuis] = useState("0");
   const [commentaire, setCommentaire] = useState("");
   const [chargement, setChargement] = useState(false);
+
   const [message, setMessage] = useState("");
   const [erreur, setErreur] = useState("");
 
   const token = localStorage.getItem("access_token");
+
+  const normaliserTexte = (texte = "") => {
+    return texte
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+
+  const trouverZoneCorrespondante = (quartier, listeZones) => {
+    if (!quartier || !listeZones?.length) {
+      return null;
+    }
+
+    const quartierNormalise = normaliserTexte(quartier);
+
+    const correspondance = listeZones.find((zone) => {
+      const nomZone = normaliserTexte(zone.nom);
+
+      return (
+        nomZone === quartierNormalise ||
+        quartierNormalise.includes(nomZone) ||
+        nomZone.includes(quartierNormalise)
+      );
+    });
+
+    if (correspondance) {
+      return correspondance;
+    }
+
+    return listeZones.find((zone) =>
+      normaliserTexte(zone.nom).includes("autre zone")
+    );
+  };
+
+  const appliquerZoneAutomatique = (quartier, listeZones = zones) => {
+    const zoneTrouvee = trouverZoneCorrespondante(
+      quartier,
+      listeZones
+    );
+
+    if (zoneTrouvee) {
+      setZoneId(String(zoneTrouvee.id));
+    }
+  };
+
+  const detecterQuartier = async (
+    latitude,
+    longitude,
+    listeZones = zones
+  ) => {
+    setRechercheQuartier(true);
+    setQuartierDetecte("");
+
+    try {
+      const params = new URLSearchParams({
+        format: "jsonv2",
+        lat: String(latitude),
+        lon: String(longitude),
+        zoom: "14",
+        addressdetails: "1",
+        layer: "address",
+        "accept-language": "fr",
+      });
+
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?${params.toString()}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Erreur de géocodage");
+      }
+
+      const data = await response.json();
+      const adresse = data.address || {};
+
+      const quartier =
+        adresse.neighbourhood ||
+        adresse.quarter ||
+        adresse.suburb ||
+        adresse.city_district ||
+        adresse.district ||
+        adresse.borough ||
+        adresse.village ||
+        adresse.hamlet ||
+        adresse.residential ||
+        "";
+
+      if (quartier) {
+        setQuartierDetecte(quartier);
+        appliquerZoneAutomatique(quartier, listeZones);
+      } else {
+        setQuartierDetecte("Quartier non identifié");
+
+        const zoneAutre = listeZones.find((zone) =>
+          normaliserTexte(zone.nom).includes("autre zone")
+        );
+
+        if (zoneAutre) {
+          setZoneId(String(zoneAutre.id));
+        }
+      }
+    } catch (error) {
+      console.error(
+        "Erreur lors de la détection du quartier :",
+        error
+      );
+
+      setQuartierDetecte("Quartier non identifié");
+
+      const zoneAutre = listeZones.find((zone) =>
+        normaliserTexte(zone.nom).includes("autre zone")
+      );
+
+      if (zoneAutre) {
+        setZoneId(String(zoneAutre.id));
+      }
+    } finally {
+      setRechercheQuartier(false);
+    }
+  };
+
+  const detecterPosition = (listeZones = zones) => {
+    setErreur("");
+    setRecherchePosition(true);
+
+    if (!navigator.geolocation) {
+      setErreur(
+        "La géolocalisation n'est pas disponible sur cet appareil."
+      );
+
+      setRecherchePosition(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const nouvellePosition = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: Number.isFinite(pos.coords.accuracy)
+            ? pos.coords.accuracy
+            : null,
+        };
+
+        setPosition(nouvellePosition);
+        setRecherchePosition(false);
+
+        await detecterQuartier(
+          nouvellePosition.latitude,
+          nouvellePosition.longitude,
+          listeZones
+        );
+      },
+
+      (error) => {
+        setRecherchePosition(false);
+
+        if (error.code === error.PERMISSION_DENIED) {
+          setErreur(
+            "L'accès au GPS a été refusé. Autorisez la localisation dans votre navigateur."
+          );
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          setErreur(
+            "Votre position GPS est actuellement indisponible."
+          );
+        } else if (error.code === error.TIMEOUT) {
+          setErreur(
+            "La détection GPS a pris trop de temps. Réessayez."
+          );
+        } else {
+          setErreur(
+            "Impossible de détecter votre position."
+          );
+        }
+      },
+
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 20000,
+      }
+    );
+  };
 
   useEffect(() => {
     if (!token) {
@@ -44,47 +236,22 @@ function Signaler() {
         },
       })
       .then((response) => {
-        setZones(response.data);
+        const listeZones = Array.isArray(response.data)
+          ? response.data
+          : response.data.results || [];
 
-        if (response.data.length > 0) {
-          setZoneId(response.data[0].id);
-        }
+        setZones(listeZones);
+
+        detecterPosition(listeZones);
       })
       .catch((error) => {
         console.error(error);
-      });
 
-    detecterPosition();
-  }, []);
-
-  const detecterPosition = () => {
-    setErreur("");
-
-    if (!navigator.geolocation) {
-      setErreur(
-        "La géolocalisation n'est pas disponible sur cet appareil."
-      );
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setPosition({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-        });
-      },
-      () => {
         setErreur(
-          "Impossible de détecter votre position. Autorisez l'accès au GPS."
+          "Impossible de récupérer la liste des zones."
         );
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-      }
-    );
-  };
+      });
+  }, []);
 
   const envoyerSignalement = async (e) => {
     e.preventDefault();
@@ -96,11 +263,15 @@ function Signaler() {
       setErreur(
         "Votre position GPS est nécessaire pour signaler une coupure."
       );
+
       return;
     }
 
     if (!zoneId) {
-      setErreur("Veuillez sélectionner une zone.");
+      setErreur(
+        "Aucune zone n'a été détectée. Veuillez sélectionner une zone."
+      );
+
       return;
     }
 
@@ -158,7 +329,6 @@ function Signaler() {
   return (
     <main className="app-page">
       <section className="mobile-app report-page">
-
         <header className="report-header">
           <button onClick={() => navigate("/accueil")}>
             <ArrowLeft />
@@ -185,18 +355,46 @@ function Signaler() {
                   {position.latitude.toFixed(6)},{" "}
                   {position.longitude.toFixed(6)}
                 </small>
+
+                {position.accuracy && (
+                  <small>
+                    Précision : environ{" "}
+                    {Math.round(position.accuracy)} m
+                  </small>
+                )}
+
+                {rechercheQuartier ? (
+                  <small>
+                    Recherche du quartier...
+                  </small>
+                ) : quartierDetecte ? (
+                  <small>
+                    Quartier : {quartierDetecte}
+                  </small>
+                ) : null}
               </>
+            ) : recherchePosition ? (
+              <span>
+                Recherche de votre position...
+              </span>
             ) : (
               <span>Position non détectée</span>
             )}
           </div>
 
           <button
+            type="button"
             className="refresh-location"
-            onClick={detecterPosition}
+            onClick={() => detecterPosition()}
+            disabled={
+              recherchePosition || rechercheQuartier
+            }
           >
             <LocateFixed size={18} />
-            Actualiser
+
+            {recherchePosition
+              ? "Localisation..."
+              : "Actualiser"}
           </button>
         </section>
 
@@ -227,6 +425,12 @@ function Signaler() {
               setZoneId(e.target.value)
             }
           >
+            <option value="">
+              {rechercheQuartier
+                ? "Détection automatique..."
+                : "Sélectionnez une zone"}
+            </option>
+
             {zones.map((zone) => (
               <option
                 key={zone.id}
@@ -236,6 +440,18 @@ function Signaler() {
               </option>
             ))}
           </select>
+
+          {quartierDetecte && (
+            <small
+              style={{
+                display: "block",
+                marginTop: "6px",
+              }}
+            >
+              📍 Quartier détecté automatiquement :{" "}
+              <strong>{quartierDetecte}</strong>
+            </small>
+          )}
 
           <label>
             <Clock3 size={20} />
@@ -293,17 +509,21 @@ function Signaler() {
             </h3>
 
             <div className="signal-map-preview">
-            <MiniMap
-           position={position}
-          height={180}
-           />
-      </div>
+              <MiniMap
+                position={position}
+                height={180}
+              />
+            </div>
           </section>
 
           <button
             type="submit"
             className="submit-report"
-            disabled={chargement || !position}
+            disabled={
+              chargement ||
+              !position ||
+              rechercheQuartier
+            }
           >
             <Send size={21} />
 
@@ -313,8 +533,10 @@ function Signaler() {
           </button>
 
           <div className="report-note">
-            Votre signalement sera automatiquement
-            rattaché à un incident proche si nécessaire.
+            Votre position GPS est utilisée pour
+            détecter automatiquement votre quartier
+            et rattacher votre signalement à un
+            incident proche.
           </div>
         </form>
 
