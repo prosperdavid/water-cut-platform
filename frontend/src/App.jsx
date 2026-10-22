@@ -4,6 +4,7 @@ import {
   Route,
 } from "react-router-dom";
 
+import Vitrine from "./pages/Vitrine";
 import Login from "./pages/Login";
 import Accueil from "./pages/Accueil";
 import Carte from "./pages/Carte";
@@ -19,46 +20,56 @@ import "./App.css";
 function App() {
   return (
     <BrowserRouter>
-     <Routes>
-  <Route path="/" element={<Login />} />
+      <Routes>
+        {/* Partie publique */}
+        <Route
+          path="/"
+          element={<Vitrine />}
+        />
 
-  <Route
-    path="/inscription"
-    element={<Inscription />}
-  />
+        <Route
+          path="/connexion"
+          element={<Login />}
+        />
 
-  <Route element={<ProtectedRoute />}>
-    <Route
-      path="/accueil"
-      element={<Accueil />}
-    />
+        <Route
+          path="/inscription"
+          element={<Inscription />}
+        />
 
-    <Route
-      path="/carte"
-      element={<Carte />}
-    />
+        {/* Partie réservée aux utilisateurs connectés */}
+        <Route element={<ProtectedRoute />}>
+          <Route
+            path="/accueil"
+            element={<Accueil />}
+          />
 
-    <Route
-      path="/signaler"
-      element={<Signaler />}
-    />
+          <Route
+            path="/carte"
+            element={<Carte />}
+          />
 
-    <Route
-      path="/incidents/:id"
-      element={<IncidentDetail />}
-    />
+          <Route
+            path="/signaler"
+            element={<Signaler />}
+          />
 
-    <Route
-      path="/historique"
-      element={<Historique />}
-    />
+          <Route
+            path="/incidents/:id"
+            element={<IncidentDetail />}
+          />
 
-    <Route
-      path="/profil"
-      element={<Profil />}
-    />
-  </Route>
-</Routes>
+          <Route
+            path="/historique"
+            element={<Historique />}
+          />
+
+          <Route
+            path="/profil"
+            element={<Profil />}
+          />
+        </Route>
+      </Routes>
     </BrowserRouter>
   );
 }
