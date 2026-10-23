@@ -278,12 +278,12 @@ function Signaler() {
     setChargement(true);
 
     try {
-      const donnees = {
-        zone_id: Number(zoneId),
-        latitude: position.latitude,
-        longitude: position.longitude,
-        commentaire,
-      };
+     const donnees = {
+       zone_id: Number(zoneId),
+       latitude: Number(position.latitude.toFixed(6)),
+       longitude: Number(position.longitude.toFixed(6)),
+      commentaire,
+    };
 
       if (depuis !== "0") {
         const minutes = Number(depuis);
