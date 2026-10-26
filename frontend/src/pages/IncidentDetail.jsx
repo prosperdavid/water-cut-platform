@@ -120,58 +120,124 @@ function IncidentDetail() {
     );
   };
 
-  const envoyerReponse = async (typeReponse) => {
-    setMessage("");
-    setErreur("");
-
-    if (!position) {
-      setErreur(
-        "Votre position GPS est nécessaire pour répondre."
+ 
+const obtenirPositionActuelle = () => {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(
+        new Error(
+          "La géolocalisation n'est pas disponible sur cet appareil."
+        )
       );
       return;
     }
 
-    setEnvoi(true);
-
-    try {
-      const response = await axios.post(
-        `${API_BASE_URL}/api/confirmations/`,
-        {
-          incident: Number(id),
-          type_reponse: typeReponse,
-          latitude: position.latitude,
-          longitude: position.longitude,
-        },
-        { headers }
-      );
-
-      setMessage(
-        response.data.message ||
-          "Votre réponse a été enregistrée."
-      );
-
-      await chargerIncident();
-    } catch (error) {
-      console.error(error);
-
-      const gpsErreur =
-        error.response?.data?.gps;
-
-      if (gpsErreur) {
-        setErreur(
-          Array.isArray(gpsErreur)
-            ? gpsErreur[0]
-            : gpsErreur
-        );
-      } else {
-        setErreur(
-          "Votre réponse n'a pas pu être enregistrée."
-        );
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        resolve({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+        });
+      },
+      (error) => {
+        if (error.code === 1) {
+          reject(
+            new Error(
+              "Autorisez l'accès à votre position GPS pour répondre."
+            )
+          );
+        } else if (error.code === 2) {
+          reject(
+            new Error(
+              "Votre position GPS est actuellement indisponible."
+            )
+          );
+        } else if (error.code === 3) {
+          reject(
+            new Error(
+              "La détection GPS a pris trop de temps. Réessayez."
+            )
+          );
+        } else {
+          reject(
+            new Error(
+              "Impossible de récupérer votre position actuelle."
+            )
+          );
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 20000,
       }
-    } finally {
-      setEnvoi(false);
+    );
+  });
+};
+
+const envoyerReponse = async (typeReponse) => {
+  setMessage("");
+  setErreur("");
+  setEnvoi(true);
+
+  try {
+    // Récupérer une position GPS fraîche au clic
+    const positionActuelle =
+      await obtenirPositionActuelle();
+
+    setPosition(positionActuelle);
+
+    const response = await axios.post(
+      `${API_BASE_URL}/api/confirmations/`,
+      {
+        incident: Number(id),
+        type_reponse: typeReponse,
+        latitude: Number(
+          positionActuelle.latitude.toFixed(6)
+        ),
+        longitude: Number(
+          positionActuelle.longitude.toFixed(6)
+        ),
+      },
+      { headers }
+    );
+
+    setMessage(
+      response.data.message ||
+        "Votre réponse a été enregistrée."
+    );
+
+    await chargerIncident();
+  } catch (error) {
+    console.error(error);
+
+    if (!error.response) {
+      setErreur(
+        error.message ||
+          "Impossible de récupérer votre position actuelle."
+      );
+      return;
     }
-  };
+
+    const gpsErreur = error.response?.data?.gps;
+
+    if (gpsErreur) {
+      setErreur(
+        Array.isArray(gpsErreur)
+          ? gpsErreur[0]
+          : gpsErreur
+      );
+    } else {
+      setErreur(
+        "Votre réponse n'a pas pu être enregistrée."
+      );
+    }
+  } finally {
+    setEnvoi(false);
+  }
+};
+
 
   if (chargement) {
     return (
