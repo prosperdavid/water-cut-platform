@@ -14,6 +14,8 @@ import Historique from "./pages/Historique";
 import Profil from "./pages/Profil";
 import Inscription from "./pages/Inscription";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+import Administration from "./pages/Administration";
 
 import "./App.css";
 
@@ -68,6 +70,9 @@ function App() {
             path="/profil"
             element={<Profil />}
           />
+        </Route>
+        <Route element={<AdminRoute />}>
+          <Route path="/administration" element={<Administration />} />
         </Route>
       </Routes>
     </BrowserRouter>

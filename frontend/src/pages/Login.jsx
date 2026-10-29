@@ -47,7 +47,16 @@ function Login() {
         response.data.refresh
       );
 
-      navigate("/accueil");
+      let destination = "/accueil";
+      try {
+        await axios.get(API_BASE_URL + "/api/administration/me/", {
+          headers: { Authorization: "Bearer " + response.data.access },
+        });
+        destination = "/administration";
+      } catch {
+        // Les habitants continuent vers l'accueil.
+      }
+      navigate(destination);
     } catch {
       setErreur(
         "Nom d'utilisateur ou mot de passe incorrect."
