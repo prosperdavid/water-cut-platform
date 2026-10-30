@@ -117,9 +117,9 @@ export default function ResidentLayout() {
           </header>
         )}
 
-        <main className="resident-content reference-content">
+        <div className="resident-content reference-content">
           <Outlet context={{ profile, incidents }} />
-        </main>
+        </div>
 
         <nav className="reference-mobile-nav" aria-label="Navigation mobile">
           {links.map(({to,mobile,Icon}) => (
