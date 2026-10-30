@@ -13,6 +13,7 @@ import {
   Clock3,
   User,
   AlertTriangle,
+  ChevronRight,
 } from "lucide-react";
 
 function Accueil() {
@@ -214,7 +215,7 @@ function Accueil() {
                       )
                     }
                    aria-label={"Voir l’incident " + incident.id}>
-                    <span aria-hidden="true">›</span>
+                    <ChevronRight size={18} aria-hidden="true" />
                   </button>
                 </article>
               ))
