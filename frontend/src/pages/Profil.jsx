@@ -1,260 +1,74 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../services/apiConfig";
+import { ArrowLeft, UserRound, Phone, Mail, ShieldCheck, BarChart3, LogOut, ChevronRight, Bell, Globe2, Info, MessageSquareText } from "lucide-react";
 
-import {
-  User,
-  Phone,
-  Mail,
-  ShieldCheck,
-  BarChart3,
-  LogOut,
-  Home,
-  Map,
-  Plus,
-  Clock3,
-  Lightbulb,
-} from "lucide-react";
+export default function Profil() {
+  const navigate=useNavigate();
+  const infoRef=useRef(null);
+  const [profil,setProfil]=useState(null);
+  const [loading,setLoading]=useState(true);
+  const [error,setError]=useState("");
 
-function Profil() {
-  const navigate = useNavigate();
+  useEffect(()=>{
+    let active=true;
+    const token=localStorage.getItem("access_token");
+    if(!token){navigate("/connexion");return undefined;}
+    axios.get(`${API_BASE_URL}/api/auth/me/`,{headers:{Authorization:`Bearer ${token}`}})
+      .then(({data})=>{if(active)setProfil(data);})
+      .catch(err=>{
+        if(!active)return;
+        if(err.response?.status===401)navigate("/connexion");
+        else setError("Impossible de charger votre profil. Vérifiez le serveur Django.");
+      }).finally(()=>{if(active)setLoading(false);});
+    return ()=>{active=false;};
+  },[navigate]);
 
-  const [profil, setProfil] = useState(null);
-  const [chargement, setChargement] = useState(true);
-  const [erreurChargement, setErreurChargement] = useState("");
-
-  useEffect(() => {
-    const token = localStorage.getItem("access_token");
-
-    if (!token) {
-      navigate("/");
-      return;
-    }
-
-    axios
-      .get(
-        `${API_BASE_URL}/api/auth/me/`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
-      .then((response) => {
-        setProfil(response.data);
-      })
-      .catch((error) => {
-        console.error(error);
-
-        if (error.response?.status === 401) {
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
-          navigate("/connexion");
-        } else {
-          setErreurChargement("Impossible de charger votre profil. Vérifiez le serveur Django.");
-        }
-      })
-      .finally(() => {
-        setChargement(false);
-      });
-  }, [navigate]);
-
-  const deconnexion = () => {
+  const deconnexion=()=>{
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
-
-    navigate("/");
+    navigate("/connexion");
   };
+  const name=[profil?.first_name,profil?.last_name].filter(Boolean).join(" ") || profil?.username || "Habitant";
+  const initials=name.split(" ").slice(0,2).map(w=>w[0]||"").join("").toUpperCase();
 
-  if (chargement) {
-    return (
-      <main className="app-page">
-        <div className="loading-page">
-          Chargement...
-        </div>
-      </main>
-    );
-  }
+  if(loading)return <div className="reference-loading">Chargement du profil...</div>;
+  if(error||!profil)return <div className="reference-feedback" role="alert"><strong>Profil indisponible</strong><p>{error||"Votre profil n'a pas pu être chargé."}</p></div>;
 
-  if (!profil) {
-    return (
-      <main className="app-page">
-        <div className="loading-page">
-          {erreurChargement || "Profil indisponible."}
-        </div>
-      </main>
-    );
-  }
+  return <div className="reference-profile">
+    <header className="reference-section-header">
+      <button type="button" className="reference-back-icon" onClick={()=>navigate("/accueil")} aria-label="Revenir à l'accueil"><ArrowLeft size={21}/></button>
+      <h1>Mon profil</h1>
+    </header>
+    <section className="reference-profile-person">
+      <div className="reference-profile-avatar">{initials||"C"}</div>
+      <h2>{name}</h2>
+      <p>Habitant · Toliara</p>
+    </section>
 
-  const nomComplet =
-    `${profil.first_name || ""} ${profil.last_name || ""}`.trim();
+    <div className="reference-profile-menu">
+      <button type="button" onClick={()=>infoRef.current?.scrollIntoView({behavior:"smooth",block:"start"})}>
+        <UserRound size={20}/><span>Mes informations</span><ChevronRight size={18}/>
+      </button>
+      <button type="button" onClick={()=>navigate("/historique")}>
+        <MessageSquareText size={20}/><span>Mes signalements</span><ChevronRight size={18}/>
+      </button>
+      <div className="reference-profile-menu-row"><Bell size={20}/><span>Notifications</span><small>Dans l'application</small></div>
+      <div className="reference-profile-menu-row"><Globe2 size={20}/><span>Langue</span><small>Français</small></div>
+      <button type="button" onClick={()=>navigate("/")}>
+        <Info size={20}/><span>À propos de Coupure</span><ChevronRight size={18}/>
+      </button>
+    </div>
 
-  return (
-    <main className="app-page">
-      <section className="mobile-app profile-page">
+    <section className="reference-profile-details" ref={infoRef}>
+      <h2>Mes informations</h2>
+      <div><Phone size={18}/><span>Téléphone</span><strong>{profil.telephone||"Non renseigné"}</strong></div>
+      <div><Mail size={18}/><span>E-mail</span><strong>{profil.email||"Non renseigné"}</strong></div>
+      <div><ShieldCheck size={18}/><span>Score de fiabilité</span><strong>{Math.round(Number(profil.score_fiabilite)||0)} / 100</strong></div>
+      <div><BarChart3 size={18}/><span>Participations</span><strong>{profil.nombre_participations||0}</strong></div>
+    </section>
 
-        <header className="profile-header">
-          <h1>Mon profil</h1>
-        </header>
-
-        <section className="profile-identity">
-          <div className="profile-avatar">
-            <User size={42} />
-          </div>
-
-          <div>
-            <h2>
-              {nomComplet || profil.username}
-            </h2>
-
-            <p>@{profil.username}</p>
-
-            <span>Habitant</span>
-          </div>
-        </section>
-
-        <section className="profile-info-card">
-
-          <div className="profile-row">
-            <div className="profile-row-icon">
-              <Phone />
-            </div>
-
-            <div>
-              <span>Téléphone</span>
-              <strong>
-                {profil.telephone || "Non renseigné"}
-              </strong>
-            </div>
-          </div>
-
-          <div className="profile-row">
-            <div className="profile-row-icon">
-              <Mail />
-            </div>
-
-            <div>
-              <span>Email</span>
-              <strong>
-                {profil.email || "Non renseigné"}
-              </strong>
-            </div>
-          </div>
-
-          <div className="profile-row">
-            <div className="profile-row-icon">
-              <ShieldCheck />
-            </div>
-
-            <div className="score-content">
-              <span>Score de fiabilité</span>
-
-              <strong>
-                {Math.round(
-                  profil.score_fiabilite
-                )} / 100
-              </strong>
-
-              <div className="profile-score-bar">
-                <span
-                  style={{
-                    width: `${Math.min(
-                      100,
-                      profil.score_fiabilite
-                    )}%`,
-                  }}
-                ></span>
-              </div>
-            </div>
-          </div>
-
-          <div className="profile-row">
-            <div className="profile-row-icon">
-              <BarChart3 />
-            </div>
-
-            <div>
-              <span>Participations</span>
-              <strong>
-                {profil.nombre_participations}
-              </strong>
-            </div>
-          </div>
-
-        </section>
-
-        <section className="score-explanation">
-          <div className="score-light">
-            <Lightbulb />
-          </div>
-
-          <div>
-            <h3>Pourquoi ce score ?</h3>
-
-            <p>
-              Votre score évolue selon la fiabilité
-              de vos signalements et de vos réponses
-              aux incidents.
-            </p>
-          </div>
-        </section>
-
-        <button
-          className="logout-button"
-          onClick={deconnexion}
-        >
-          <LogOut />
-          Se déconnecter
-        </button>
-
-        <nav className="bottom-nav">
-          <button
-            onClick={() =>
-              navigate("/accueil")
-            }
-          >
-            <Home />
-            <span>Accueil</span>
-          </button>
-
-          <button
-            onClick={() =>
-              navigate("/carte")
-            }
-          >
-            <Map />
-            <span>Carte</span>
-          </button>
-
-          <button
-            className="central-button"
-            onClick={() =>
-              navigate("/signaler")
-            }
-          >
-            <Plus />
-            <span>Signaler</span>
-          </button>
-
-          <button
-            onClick={() =>
-              navigate("/historique")
-            }
-          >
-            <Clock3 />
-            <span>Historique</span>
-          </button>
-
-          <button className="active">
-            <User />
-            <span>Profil</span>
-          </button>
-        </nav>
-
-      </section>
-    </main>
-  );
+    <button type="button" className="reference-logout" onClick={deconnexion}><LogOut size={18}/>Se déconnecter</button>
+  </div>;
 }
-
-export default Profil;
