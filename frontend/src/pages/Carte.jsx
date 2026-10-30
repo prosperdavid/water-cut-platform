@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../services/apiConfig";
 import CoupureIcon from "../components/CoupureIcon";
@@ -22,6 +22,7 @@ import {
   Clock3,
   User,
   LocateFixed,
+  Search,
 } from "lucide-react";
 
 
@@ -106,6 +107,10 @@ function ControleCarte({
 
 function Carte() {
   const navigate = useNavigate();
+  const { search } = useLocation();
+  const searchTerm = new URLSearchParams(search).get("q") || "";
+  const [recherche, setRecherche] = useState(searchTerm);
+  useEffect(() => { setRecherche(searchTerm); }, [searchTerm]);
 
   const [incidents, setIncidents] =
     useState([]);
@@ -308,13 +313,17 @@ function Carte() {
   };
 
 
-  const incidentsFiltres =
-    filtre === "TOUS"
-      ? incidents
-      : incidents.filter(
-          (incident) =>
-            incident.statut === filtre
-        );
+  const incidentsFiltres = incidents.filter((incident) => {
+    const matchesStatus = filtre === "TOUS" || incident.statut === filtre;
+    const matchesSearch = !recherche.trim() || (incident.zone_nom || "")
+      .normalize("NFD").replace(/[\\u0300-\\u036f]/g, "")
+      .toLowerCase().includes(
+        recherche.trim().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase()
+      );
+    return matchesStatus && matchesSearch &&
+      Number.isFinite(Number(incident.latitude)) &&
+      Number.isFinite(Number(incident.longitude));
+  });
 
 
   const afficherStatut = (statut) => {
@@ -344,6 +353,13 @@ function Carte() {
           </p>
         </header>
 
+
+        <label className="reference-map-search">
+          <Search size={17} aria-hidden="true"/>
+          <input aria-label="Rechercher un quartier sur la carte" value={recherche}
+            onChange={event=>setRecherche(event.target.value)} placeholder="Rechercher un quartier..."/>
+          {recherche && <button type="button" aria-label="Effacer la recherche" onClick={()=>setRecherche("")}>×</button>}
+        </label>
 
         <div className="map-filters">
           <button
@@ -441,6 +457,9 @@ function Carte() {
         )}
 
 
+        <p className="reference-map-count" aria-live="polite">
+          {incidentsFiltres.length} incident{incidentsFiltres.length>1?"s":""} correspondant aux filtres
+        </p>
         <div className="real-map">
           <MapContainer
             center={POSITION_TOLIARA}
