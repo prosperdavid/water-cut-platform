@@ -1,33 +1,86 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
-  Activity, AlertTriangle, ArrowLeft, CheckCircle2, Droplets,
-  LayoutDashboard, LogOut, MapPin, RefreshCw, ShieldCheck, Users, XCircle
+  Activity, AlertCircle, AlertTriangle, ArrowDownRight, ArrowLeft,
+  ArrowRight, Bell, Check, CheckCircle2, ChevronRight, CircleHelp,
+  Clock3, Droplets, LayoutDashboard, LogOut, MapPin, Menu, MoreHorizontal,
+  RefreshCw, Search, ShieldCheck, SlidersHorizontal, Sparkles, Users,
+  Waves, X, XCircle,
 } from "lucide-react";
 import { API_BASE_URL } from "../services/apiConfig";
 import "./Administration.css";
 
 const STATUTS = {
-  A_CONFIRMER: "À confirmer",
-  ACTIF: "Coupure confirmée",
-  RETABLISSEMENT_PROBABLE: "Rétablissement probable",
-  RETABLI: "Eau rétablie",
-  REJETE: "Rejeté",
+  A_CONFIRMER: { libelle: "À confirmer", couleur: "attente" },
+  ACTIF: { libelle: "Coupure confirmée", couleur: "actif" },
+  RETABLISSEMENT_PROBABLE: { libelle: "Rétablissement probable", couleur: "probable" },
+  RETABLI: { libelle: "Eau rétablie", couleur: "retabli" },
+  REJETE: { libelle: "Rejeté", couleur: "rejete" },
 };
 
-function dateFR(valeur) {
+const NAVIGATION = [
+  { key: "tableau", titre: "Vue d’ensemble", icon: LayoutDashboard },
+  { key: "incidents", titre: "Incidents", icon: AlertTriangle },
+  { key: "utilisateurs", titre: "Utilisateurs", icon: Users },
+];
+
+function dateFR(valeur, avecHeure = false) {
   if (!valeur) return "—";
   const date = new Date(valeur);
-  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString("fr-FR");
+  if (Number.isNaN(date.getTime())) return "—";
+  return avecHeure
+    ? date.toLocaleString("fr-FR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+    : date.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 function erreurAPI(erreur) {
   const contenu = erreur?.response?.data;
+  if (erreur?.response?.status === 401) return "Votre session a expiré. Déconnectez-vous puis reconnectez-vous.";
+  if (erreur?.response?.status === 403) return "Vous ne disposez pas des droits nécessaires.";
   if (typeof contenu?.detail === "string") return contenu.detail;
   if (typeof contenu?.action === "string") return contenu.action;
   if (Array.isArray(contenu?.action)) return contenu.action.join(" ");
-  return "Une erreur est survenue. Vérifiez la connexion et réessayez.";
+  return "Impossible de communiquer avec le serveur. Vérifiez votre connexion et réessayez.";
+}
+
+function Statut({ valeur }) {
+  const meta = STATUTS[valeur] || { libelle: valeur || "Inconnu", couleur: "attente" };
+  return (
+    <span className={"coupure-etat coupure-etat--" + meta.couleur}>
+      <span className="coupure-etat__point" />
+      {meta.libelle}
+    </span>
+  );
+}
+
+function IconBadge({ icon: Icon, couleur }) {
+  return <span className={"coupure-icon-badge coupure-icon-badge--" + couleur}><Icon size={20} strokeWidth={2} /></span>;
+}
+
+function EmptyState({ icon: Icon = Search, titre, description }) {
+  return (
+    <div className="coupure-empty">
+      <div className="coupure-empty__icon"><Icon size={23} /></div>
+      <strong>{titre}</strong>
+      <p>{description}</p>
+    </div>
+  );
+}
+
+function Metrique({ icon, couleur, libelle, valeur, details }) {
+  return (
+    <article className="coupure-metrique">
+      <div className="coupure-metrique__haut">
+        <IconBadge icon={icon} couleur={couleur} />
+        <span className="coupure-metrique__details">{details}</span>
+      </div>
+      <div>
+        <strong className="coupure-metrique__valeur">{valeur ?? "—"}</strong>
+        <p className="coupure-metrique__libelle">{libelle}</p>
+      </div>
+    </article>
+  );
 }
 
 export default function Administration() {
@@ -37,11 +90,18 @@ export default function Administration() {
   const [incidents, setIncidents] = useState([]);
   const [utilisateurs, setUtilisateurs] = useState([]);
   const [filtre, setFiltre] = useState("TOUS");
+  const [rechercheIncident, setRechercheIncident] = useState("");
+  const [rechercheCompte, setRechercheCompte] = useState("");
   const [chargement, setChargement] = useState(true);
   const [operation, setOperation] = useState(false);
   const [erreur, setErreur] = useState("");
   const [message, setMessage] = useState("");
+  const [confirmation, setConfirmation] = useState(null);
+  const [menuMobile, setMenuMobile] = useState(false);
+  const [derniereMaj, setDerniereMaj] = useState(null);
+  const boutonAnnulerRef = useRef(null);
   const client = useMemo(() => axios.create({ baseURL: API_BASE_URL }), []);
+
   const config = () => ({
     headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
   });
@@ -59,6 +119,7 @@ export default function Administration() {
       setTableau(dashboard.data);
       setIncidents(listeIncidents.data);
       setUtilisateurs(listeUtilisateurs.data);
+      setDerniereMaj(new Date());
     } catch (e) {
       setErreur(erreurAPI(e));
     } finally {
@@ -68,44 +129,21 @@ export default function Administration() {
 
   useEffect(() => { charger(); }, [charger]);
 
-  const moderer = async (incident, action) => {
-    const verbe = action === "rejeter" ? "rejeter" : "rouvrir";
-    if (!window.confirm("Voulez-vous " + verbe + " l'incident n°" + incident.id + " ?")) return;
-    setOperation(true);
-    setMessage("");
-    try {
-      await client.patch(
-        "/api/administration/incidents/" + incident.id + "/",
-        { action },
-        config()
-      );
-      setMessage("L'incident n°" + incident.id + " a été modifié.");
-      await charger();
-    } catch (e) {
-      setErreur(erreurAPI(e));
-    } finally {
-      setOperation(false);
+  useEffect(() => {
+    if (!confirmation) return undefined;
+    boutonAnnulerRef.current?.focus();
+    function fermerAvecEchap(e) {
+      if (e.key === "Escape" && !operation) setConfirmation(null);
     }
-  };
+    window.addEventListener("keydown", fermerAvecEchap);
+    return () => window.removeEventListener("keydown", fermerAvecEchap);
+  }, [confirmation, operation]);
 
-  const modifierCompte = async (compte) => {
-    const verbe = compte.is_active ? "désactiver" : "réactiver";
-    if (!window.confirm("Voulez-vous " + verbe + " le compte « " + compte.username + " » ?")) return;
-    setOperation(true);
+  const naviguer = (cle) => {
+    setOnglet(cle);
+    setMenuMobile(false);
+    setErreur("");
     setMessage("");
-    try {
-      await client.patch(
-        "/api/administration/utilisateurs/" + compte.id + "/",
-        { is_active: !compte.is_active },
-        config()
-      );
-      setMessage("Le compte a été modifié.");
-      await charger();
-    } catch (e) {
-      setErreur(erreurAPI(e));
-    } finally {
-      setOperation(false);
-    }
   };
 
   const deconnexion = () => {
@@ -113,101 +151,329 @@ export default function Administration() {
     localStorage.removeItem("refresh_token");
     navigate("/connexion");
   };
-  const incidentsFiltres = incidents.filter(
-    incident => filtre === "TOUS" || incident.statut === filtre
-  );
+
+  const executerAction = async () => {
+    if (!confirmation || operation) return;
+    const { type, cible, action } = confirmation;
+    setOperation(true);
+    setErreur("");
+    setMessage("");
+    try {
+      if (type === "incident") {
+        await client.patch("/api/administration/incidents/" + cible.id + "/", { action }, config());
+        setMessage("L’incident #" + cible.id + " a bien été mis à jour.");
+      } else {
+        await client.patch(
+          "/api/administration/utilisateurs/" + cible.id + "/",
+          { is_active: !cible.is_active },
+          config()
+        );
+        setMessage("Le compte « " + cible.username + " » a bien été mis à jour.");
+      }
+      setConfirmation(null);
+      await charger();
+    } catch (e) {
+      setErreur(erreurAPI(e));
+      setConfirmation(null);
+    } finally {
+      setOperation(false);
+    }
+  };
+
+  const incidentsFiltres = useMemo(() => {
+    const terme = rechercheIncident.trim().toLocaleLowerCase("fr-FR");
+    return incidents.filter((incident) => {
+      const correspondAuStatut = filtre === "TOUS" || incident.statut === filtre;
+      const correspondAuTexte = !terme
+        || String(incident.id).includes(terme.replace(/^#/, ""))
+        || (incident.zone_nom || "").toLocaleLowerCase("fr-FR").includes(terme);
+      return correspondAuStatut && correspondAuTexte;
+    });
+  }, [incidents, filtre, rechercheIncident]);
+
+  const utilisateursFiltres = useMemo(() => {
+    const terme = rechercheCompte.trim().toLocaleLowerCase("fr-FR");
+    return utilisateurs.filter((compte) =>
+      !terme || [compte.username, compte.first_name, compte.last_name]
+        .some((valeur) => (valeur || "").toLocaleLowerCase("fr-FR").includes(terme))
+    );
+  }, [utilisateurs, rechercheCompte]);
+
+  const repartition = tableau?.incidents_par_statut || {};
+  const total = tableau?.nombre_incidents || 0;
+  const enCours = (repartition.ACTIF || 0) + (repartition.RETABLISSEMENT_PROBABLE || 0);
+  const attente = repartition.A_CONFIRMER || 0;
+
+  const ouvrirIncident = (incident, action) => setConfirmation({ type: "incident", cible: incident, action });
+  const ouvrirCompte = (compte) => setConfirmation({ type: "utilisateur", cible: compte });
+  const confirmationRejet = confirmation?.type === "incident" && confirmation?.action === "rejeter";
+  const confirmationDesactivation = confirmation?.type === "utilisateur" && confirmation?.cible.is_active;
+  const actionDestructive = confirmationRejet || confirmationDesactivation;
 
   return (
-    <main className="adm-shell">
-      <aside className="adm-sidebar">
-        <div className="adm-brand"><Droplets size={26} /><div><strong>Coupure</strong><small>Administration • Toliara</small></div></div>
-        <p className="adm-label">ESPACE DE GESTION</p>
-        <nav className="adm-menu" aria-label="Administration">
-          <button className={onglet === "tableau" ? "active" : ""} onClick={() => setOnglet("tableau")}><LayoutDashboard size={18} /> Tableau de bord</button>
-          <button className={onglet === "incidents" ? "active" : ""} onClick={() => setOnglet("incidents")}><AlertTriangle size={18} /> Incidents</button>
-          <button className={onglet === "utilisateurs" ? "active" : ""} onClick={() => setOnglet("utilisateurs")}><Users size={18} /> Utilisateurs</button>
-        </nav>
-        <div className="adm-sidebar-foot">
-          <button onClick={() => navigate("/accueil")}><ArrowLeft size={17} /> Retour au site</button>
-          <button onClick={deconnexion}><LogOut size={17} /> Déconnexion</button>
+    <main className="coupure-admin">
+      <aside className={"coupure-sidebar" + (menuMobile ? " coupure-sidebar--ouvert" : "")}>
+        <div className="coupure-marque">
+          <div className="coupure-marque__logo"><Droplets size={24} strokeWidth={2.5} /></div>
+          <div><span className="coupure-marque__nom">coupure<span>.</span></span><small>ESPACE ADMINISTRATEUR</small></div>
+        </div>
+
+        <div className="coupure-sidebar__nav-wrap">
+          <p className="coupure-sidebar__titre">MENU PRINCIPAL</p>
+          <nav className="coupure-navigation" aria-label="Navigation administrateur">
+            {NAVIGATION.map(({ key, titre, icon: Icon }) => (
+              <button
+                type="button"
+                key={key}
+                className={"coupure-navigation__item" + (onglet === key ? " coupure-navigation__item--actif" : "")}
+                aria-current={onglet === key ? "page" : undefined}
+                onClick={() => naviguer(key)}
+              >
+                <Icon size={19} strokeWidth={2} /><span>{titre}</span>
+                {key === "incidents" && attente > 0 && <span className="coupure-navigation__nombre">{attente}</span>}
+                {onglet === key && <span className="coupure-navigation__indicateur" />}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        <div className="coupure-sidebar__bas">
+          <div className="coupure-sidebar__notice">
+            <div className="coupure-sidebar__notice-icon"><Waves size={20} /></div>
+            <strong>Le suivi, ensemble.</strong>
+            <p>Une information citoyenne plus claire, quartier par quartier.</p>
+          </div>
+          <button className="coupure-sidebar__lien" onClick={() => navigate("/accueil")}><ArrowLeft size={17} /> Revenir au site</button>
+          <button className="coupure-sidebar__lien coupure-sidebar__lien--sortie" onClick={deconnexion}><LogOut size={17} /> Se déconnecter</button>
+          <div className="coupure-sidebar__copyright">© Coupure · Toliara</div>
         </div>
       </aside>
-      <section className="adm-content">
-        <header className="adm-header">
-          <div><span className="adm-label"><ShieldCheck size={15} /> ACCÈS ADMINISTRATEUR</span>
-            <h1>{onglet === "tableau" ? "Tableau de bord" : onglet === "incidents" ? "Gestion des incidents" : "Gestion des utilisateurs"}</h1>
-            <p>Suivi et modération de la plateforme participative.</p></div>
-          <button className="adm-refresh" onClick={charger} disabled={chargement}><RefreshCw size={16} /> Actualiser</button>
+
+      {menuMobile && <button type="button" aria-label="Fermer le menu" className="coupure-overlay" onClick={() => setMenuMobile(false)} />}
+
+      <div className="coupure-main">
+        <header className="coupure-topbar">
+          <div className="coupure-topbar__gauche">
+            <button className="coupure-mobile-menu" aria-label="Ouvrir le menu" onClick={() => setMenuMobile(true)}><Menu size={21} /></button>
+            <span className="coupure-fil-ariane">Administration</span>
+            <ChevronRight size={15} className="coupure-fil-ariane__chevron" />
+            <strong>{onglet === "tableau" ? "Vue d’ensemble" : onglet === "incidents" ? "Incidents" : "Utilisateurs"}</strong>
+          </div>
+          <div className="coupure-topbar__droite">
+            <span className="coupure-topbar__lieu"><MapPin size={15} /> Toliara, Madagascar</span>
+            <span className="coupure-topbar__separateur" />
+            <span className="coupure-topbar__profil" title="Session administrateur"><ShieldCheck size={16} /><span>Admin</span></span>
+          </div>
         </header>
-        {erreur && <div className="adm-alert adm-error" role="alert">{erreur}</div>}
-        {message && <div className="adm-alert adm-success" role="status">{message}</div>}
-        {chargement && <p>Chargement des données…</p>}
 
-        {onglet === "tableau" && tableau && <>
-          <div className="adm-stats">
-            <article><Activity /><span>Incidents au total</span><strong>{tableau.nombre_incidents}</strong></article>
-            <article><AlertTriangle /><span>À confirmer</span><strong>{tableau.incidents_par_statut?.A_CONFIRMER ?? 0}</strong></article>
-            <article><Users /><span>Habitants inscrits</span><strong>{tableau.nombre_utilisateurs}</strong></article>
-            <article><MapPin /><span>Quartiers suivis</span><strong>{tableau.nombre_zones}</strong></article>
+        <div className="coupure-contenu">
+          <div className="coupure-page-header">
+            <div>
+              <span className="coupure-surtitre"><span className="coupure-surtitre__point" /> PLATEFORME PARTICIPATIVE</span>
+              <h1>{onglet === "tableau" ? "Vue d’ensemble" : onglet === "incidents" ? "Gestion des incidents" : "Gestion des utilisateurs"}</h1>
+              <p>{onglet === "tableau"
+                ? "Gardez une vue claire sur les signalements et l’activité des quartiers."
+                : onglet === "incidents"
+                  ? "Consultez les déclarations et modérez les incidents de la communauté."
+                  : "Suivez les comptes des habitants et gérez leur accès à la plateforme."}</p>
+            </div>
+            <button className="coupure-bouton coupure-bouton--clair" disabled={chargement || operation} onClick={charger}>
+              <RefreshCw size={17} className={chargement ? "coupure-tourne" : ""} />
+              <span>{chargement ? "Actualisation..." : "Actualiser"}</span>
+            </button>
           </div>
-          <div className="adm-columns">
-            <section className="adm-panel"><h2>Répartition des incidents</h2>
-              {Object.entries(STATUTS).map(([code, titre]) => {
-                const n = tableau.incidents_par_statut?.[code] ?? 0;
-                const pct = tableau.nombre_incidents ? (n / tableau.nombre_incidents) * 100 : 0;
-                return <div className="adm-status-row" key={code}>
-                  <div><span>{titre}</span><b>{n}</b></div>
-                  <div className="adm-bar"><span style={{ width: pct + "%" }} /></div>
-                </div>;
-              })}
-            </section>
-            <section className="adm-panel"><h2>Incidents récents</h2>
-              {tableau.incidents_recents?.length ? tableau.incidents_recents.map(incident =>
-                <div className="adm-recent" key={incident.id}>
-                  <div><strong>{incident.zone_nom}</strong><small>#{incident.id} · {dateFR(incident.date_creation)}</small></div>
-                  <span className="adm-pill">{STATUTS[incident.statut] || incident.statut}</span>
+
+          {erreur && <div className="coupure-notification coupure-notification--erreur" role="alert"><AlertCircle size={19} /><span>{erreur}</span><button aria-label="Fermer" onClick={() => setErreur("")}><X size={16} /></button></div>}
+          {message && <div className="coupure-notification coupure-notification--succes" role="status"><CheckCircle2 size={19} /><span>{message}</span><button aria-label="Fermer" onClick={() => setMessage("")}><X size={16} /></button></div>}
+          {chargement && !tableau && <div className="coupure-chargement" role="status"><RefreshCw size={22} className="coupure-tourne" /> Chargement de votre espace de gestion…</div>}
+
+          {onglet === "tableau" && tableau && (
+            <>
+              <section className="coupure-hero">
+                <div className="coupure-hero__corps">
+                  <div className="coupure-hero__etiquette"><Sparkles size={14} /> CENTRE DE SUIVI · TOLIARA</div>
+                  <h2>Chaque signalement<br />compte<span>.</span></h2>
+                  <p>Un seul espace pour suivre les coupures déclarées et mieux accompagner les habitants.</p>
+                  <button type="button" className="coupure-hero__bouton" onClick={() => naviguer("incidents")}>
+                    Gérer les incidents <ArrowRight size={17} />
+                  </button>
                 </div>
-              ) : <p>Aucun incident enregistré.</p>}
-              <button className="adm-link" onClick={() => setOnglet("incidents")}>Voir les incidents</button>
+                <div className="coupure-hero__illustration" aria-hidden="true">
+                  <div className="coupure-hero__cercle coupure-hero__cercle--externe" />
+                  <div className="coupure-hero__cercle coupure-hero__cercle--interne" />
+                  <div className="coupure-hero__goutte"><Droplets size={88} strokeWidth={1.5} /></div>
+                  <span className="coupure-hero__decor coupure-hero__decor--un" />
+                  <span className="coupure-hero__decor coupure-hero__decor--deux" />
+                </div>
+                <div className="coupure-hero__mention"><span className="coupure-hero__mention-point" /> Données issues des habitants, non officielles</div>
+              </section>
+
+              <section className="coupure-metriques" aria-label="Indicateurs de la plateforme">
+                <Metrique icon={Waves} couleur="bleu" libelle="Incidents déclarés" valeur={total} details="Total enregistré" />
+                <Metrique icon={Activity} couleur="corail" libelle="Incidents en cours" valeur={enCours} details="En cours de suivi" />
+                <Metrique icon={Clock3} couleur="orange" libelle="À confirmer" valeur={attente} details="À examiner" />
+                <Metrique icon={Users} couleur="violet" libelle="Habitants inscrits" valeur={tableau.nombre_utilisateurs} details="Comptes habitants" />
+              </section>
+
+              <div className="coupure-grille-dashboard">
+                <section className="coupure-carte">
+                  <div className="coupure-carte__entete">
+                    <div><span className="coupure-section-label">VUE GLOBALE</span><h3>État des signalements</h3><p>Répartition des incidents selon leur statut.</p></div>
+                    <span className="coupure-carte__badge"><Activity size={14} /> {total} au total</span>
+                  </div>
+                  <div className="coupure-repartition">
+                    {Object.entries(STATUTS).map(([code, meta]) => {
+                      const nombre = repartition[code] || 0;
+                      const pourcentage = total > 0 ? (nombre / total) * 100 : 0;
+                      return (
+                        <div className="coupure-repartition__ligne" key={code}>
+                          <div className="coupure-repartition__infos"><span className={"coupure-repartition__pastille coupure-repartition__pastille--" + meta.couleur} /><span className="coupure-repartition__nom">{meta.libelle}</span><strong>{nombre}</strong></div>
+                          <div className="coupure-repartition__barre" role="progressbar" aria-label={meta.libelle} aria-valuenow={nombre} aria-valuemin={0} aria-valuemax={total}>
+                            <span className={"coupure-repartition__niveau coupure-repartition__niveau--" + meta.couleur} style={{ width: pourcentage + "%" }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="coupure-carte__pied"><MapPin size={16} /> <span>{tableau.nombre_zones} quartier(s) enregistré(s) dans la plateforme</span></div>
+                </section>
+
+                <section className="coupure-carte">
+                  <div className="coupure-carte__entete">
+                    <div><span className="coupure-section-label">ACTIVITÉ RÉCENTE</span><h3>Derniers incidents</h3><p>Les déclarations les plus récentes.</p></div>
+                    <span className="coupure-carte__icone"><Bell size={18} /></span>
+                  </div>
+                  <div className="coupure-activite">
+                    {tableau.incidents_recents?.length ? tableau.incidents_recents.map((incident) => (
+                      <div className="coupure-activite__ligne" key={incident.id}>
+                        <div className="coupure-activite__repere"><MapPin size={16} /></div>
+                        <div className="coupure-activite__corps">
+                          <div className="coupure-activite__titre"><strong>{incident.zone_nom || "Zone inconnue"}</strong><span>#{incident.id}</span></div>
+                          <p>{dateFR(incident.date_creation, true)}</p>
+                        </div>
+                        <Statut valeur={incident.statut} />
+                      </div>
+                    )) : <EmptyState icon={Waves} titre="Aucun incident pour le moment" description="Les prochains signalements apparaîtront ici." />}
+                  </div>
+                  <button className="coupure-carte__voir" type="button" onClick={() => naviguer("incidents")}>
+                    Consulter tous les incidents <ArrowRight size={17} />
+                  </button>
+                </section>
+              </div>
+
+              <div className="coupure-info-bas"><CircleHelp size={16} /><span>Les informations proviennent des contributions citoyennes. Elles ne remplacent pas les communications officielles du service d’eau.</span></div>
+            </>
+          )}
+
+          {onglet === "incidents" && (
+            <section className="coupure-carte coupure-carte--table">
+              <div className="coupure-liste-header">
+                <div><span className="coupure-section-label">MODÉRATION</span><h3>Liste des incidents</h3><p>Les 100 incidents les plus récents · {incidentsFiltres.length} résultat(s) affiché(s)</p></div>
+                <span className="coupure-compteur">{incidents.length} incidents chargés</span>
+              </div>
+              <div className="coupure-filtres">
+                <label className="coupure-recherche"><Search size={19} /><span className="coupure-visually-hidden">Rechercher un incident</span>
+                  <input value={rechercheIncident} onChange={(e) => setRechercheIncident(e.target.value)} placeholder="Rechercher par quartier ou numéro…" />
+                  {rechercheIncident && <button type="button" aria-label="Effacer la recherche" onClick={() => setRechercheIncident("")}><X size={16} /></button>}
+                </label>
+                <label className="coupure-select"><SlidersHorizontal size={18} /><span className="coupure-visually-hidden">Filtrer par statut</span>
+                  <select value={filtre} onChange={(e) => setFiltre(e.target.value)}>
+                    <option value="TOUS">Tous les statuts</option>
+                    {Object.entries(STATUTS).map(([code, meta]) => <option value={code} key={code}>{meta.libelle}</option>)}
+                  </select>
+                </label>
+              </div>
+              <div className="coupure-table-scroll">
+                <table className="coupure-table">
+                  <thead><tr><th>INCIDENT</th><th>QUARTIER</th><th>STATUT</th><th>CONFIANCE</th><th>SIGNALÉ LE</th><th className="coupure-table__actions">ACTION</th></tr></thead>
+                  <tbody>
+                    {incidentsFiltres.map((incident) => {
+                      const confiance = Math.max(0, Math.min(100, Number(incident.score_confiance) || 0));
+                      return (
+                        <tr key={incident.id}>
+                          <td><span className="coupure-reference">#{incident.id}</span></td>
+                          <td><div className="coupure-cellule-zone"><span className="coupure-cellule-zone__icone"><MapPin size={17} /></span><strong>{incident.zone_nom || "Zone inconnue"}</strong></div></td>
+                          <td><Statut valeur={incident.statut} /></td>
+                          <td><div className="coupure-confiance"><strong>{Math.round(confiance)} %</strong><div className="coupure-confiance__barre"><span style={{ width: confiance + "%" }} /></div></div></td>
+                          <td className="coupure-date">{dateFR(incident.date_creation)}</td>
+                          <td className="coupure-table__actions">
+                            {incident.statut === "REJETE" ? (
+                              <button className="coupure-bouton-action coupure-bouton-action--reouvrir" disabled={operation} onClick={() => ouvrirIncident(incident, "rouvrir")}><RefreshCw size={15} /> Rouvrir</button>
+                            ) : incident.statut === "RETABLI" ? (
+                              <span className="coupure-termine"><Check size={15} /> Clôturé</span>
+                            ) : (
+                              <button className="coupure-bouton-action coupure-bouton-action--danger" disabled={operation} onClick={() => ouvrirIncident(incident, "rejeter")}><XCircle size={15} /> Rejeter</button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {!incidentsFiltres.length && <tr><td colSpan={6}><EmptyState icon={Search} titre="Aucun incident trouvé" description="Essayez un autre quartier ou un autre filtre." /></td></tr>}
+                  </tbody>
+                </table>
+              </div>
             </section>
-          </div>
-        </>}
+          )}
 
-        {onglet === "incidents" && <section className="adm-panel">
-          <div className="adm-panel-title"><div><h2>Modération des incidents</h2><p>100 derniers incidents • rejet et réouverture</p></div>
-            <label>Statut <select value={filtre} onChange={e => setFiltre(e.target.value)}>
-              <option value="TOUS">Tous</option>
-              {Object.entries(STATUTS).map(([code, titre]) => <option value={code} key={code}>{titre}</option>)}
-            </select></label>
-          </div>
-          <div className="adm-scroll"><table><thead><tr><th>Incident</th><th>Zone</th><th>Statut</th><th>Confiance</th><th>Créé le</th><th>Action</th></tr></thead>
-            <tbody>{incidentsFiltres.map(incident => <tr key={incident.id}>
-              <td>#{incident.id}</td><td>{incident.zone_nom}</td>
-              <td><span className="adm-pill">{STATUTS[incident.statut] || incident.statut}</span></td>
-              <td>{Math.round(incident.score_confiance || 0)} %</td><td>{dateFR(incident.date_creation)}</td>
-              <td>{incident.statut === "REJETE" ?
-                <button className="adm-action" disabled={operation} onClick={() => moderer(incident, "rouvrir")}><CheckCircle2 size={15} /> Rouvrir</button> :
-                incident.statut === "RETABLI" ? "Clôturé" :
-                <button className="adm-action danger" disabled={operation} onClick={() => moderer(incident, "rejeter")}><XCircle size={15} /> Rejeter</button>}</td>
-            </tr>)}
-            {!incidentsFiltres.length && <tr><td colSpan={6}>Aucun incident trouvé.</td></tr>}
-            </tbody></table></div>
-        </section>}
+          {onglet === "utilisateurs" && (
+            <section className="coupure-carte coupure-carte--table">
+              <div className="coupure-liste-header">
+                <div><span className="coupure-section-label">COMMUNAUTÉ</span><h3>Comptes habitants</h3><p>Les 100 comptes les plus récents · {utilisateursFiltres.length} résultat(s) affiché(s)</p></div>
+                <span className="coupure-compteur">{utilisateurs.length} comptes chargés</span>
+              </div>
+              <div className="coupure-filtres">
+                <label className="coupure-recherche"><Search size={19} /><span className="coupure-visually-hidden">Rechercher un utilisateur</span>
+                  <input value={rechercheCompte} onChange={(e) => setRechercheCompte(e.target.value)} placeholder="Rechercher un nom ou identifiant…" />
+                  {rechercheCompte && <button type="button" aria-label="Effacer la recherche" onClick={() => setRechercheCompte("")}><X size={16} /></button>}
+                </label>
+                <div className="coupure-comptes-info"><ShieldCheck size={16} /> Comptes administrateurs protégés</div>
+              </div>
+              <div className="coupure-table-scroll">
+                <table className="coupure-table">
+                  <thead><tr><th>UTILISATEUR</th><th>NOM COMPLET</th><th>INSCRIPTION</th><th>ÉTAT DU COMPTE</th><th className="coupure-table__actions">ACTION</th></tr></thead>
+                  <tbody>
+                    {utilisateursFiltres.map((compte) => (
+                      <tr key={compte.id}>
+                        <td><div className="coupure-utilisateur"><span className="coupure-utilisateur__avatar">{(compte.username || "?").charAt(0).toLocaleUpperCase("fr-FR")}</span><div><strong>{compte.username}</strong><small>Habitant</small></div></div></td>
+                        <td>{[compte.first_name, compte.last_name].filter(Boolean).join(" ") || "—"}</td>
+                        <td className="coupure-date">{dateFR(compte.date_joined)}</td>
+                        <td><span className={"coupure-etat " + (compte.is_active ? "coupure-etat--retabli" : "coupure-etat--rejete")}><span className="coupure-etat__point" />{compte.is_active ? "Actif" : "Désactivé"}</span></td>
+                        <td className="coupure-table__actions"><button className={"coupure-bouton-action " + (compte.is_active ? "coupure-bouton-action--danger" : "coupure-bouton-action--reouvrir")} disabled={operation} onClick={() => ouvrirCompte(compte)}>{compte.is_active ? <><XCircle size={15} /> Désactiver</> : <><CheckCircle2 size={15} /> Réactiver</>}</button></td>
+                      </tr>
+                    ))}
+                    {!utilisateursFiltres.length && <tr><td colSpan={5}><EmptyState icon={Users} titre="Aucun utilisateur trouvé" description="Essayez un autre nom ou identifiant." /></td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
-        {onglet === "utilisateurs" && <section className="adm-panel">
-          <h2>Comptes habitants</h2><p>100 derniers comptes • administrateurs non modifiables</p>
-          <div className="adm-scroll"><table><thead><tr><th>Utilisateur</th><th>Nom</th><th>Inscription</th><th>État</th><th>Action</th></tr></thead>
-            <tbody>{utilisateurs.map(compte => <tr key={compte.id}>
-              <td><strong>{compte.username}</strong></td>
-              <td>{[compte.first_name, compte.last_name].filter(Boolean).join(" ") || "—"}</td>
-              <td>{dateFR(compte.date_joined)}</td><td>{compte.is_active ? "Actif" : "Désactivé"}</td>
-              <td><button className={"adm-action " + (compte.is_active ? "danger" : "")} disabled={operation} onClick={() => modifierCompte(compte)}>{compte.is_active ? "Désactiver" : "Réactiver"}</button></td>
-            </tr>)}
-            {!utilisateurs.length && <tr><td colSpan={5}>Aucun compte habitant.</td></tr>}
-            </tbody></table></div>
-        </section>}
-        <footer className="adm-footer">Coupure • Informations citoyennes non officielles.</footer>
-      </section>
+          <footer className="coupure-pied"><span>© 2026 Coupure · Plateforme participative de suivi des coupures d’eau</span><span>{derniereMaj ? "Données actualisées à " + derniereMaj.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "En attente des données"}</span></footer>
+        </div>
+      </div>
+
+      {confirmation && (
+        <div className="coupure-modal-fond" onMouseDown={(e) => { if (e.target === e.currentTarget && !operation) setConfirmation(null); }}>
+          <section className="coupure-modal" role="dialog" aria-modal="true" aria-labelledby="coupure-modal-titre" aria-describedby="coupure-modal-description">
+            <div className={"coupure-modal__icone" + (actionDestructive ? " coupure-modal__icone--danger" : "")}>{actionDestructive ? <AlertTriangle size={25} /> : <RefreshCw size={24} />}</div>
+            <button className="coupure-modal__fermer" aria-label="Fermer" disabled={operation} onClick={() => setConfirmation(null)}><X size={19} /></button>
+            <h2 id="coupure-modal-titre">{confirmation.type === "incident"
+              ? confirmation.action === "rejeter" ? "Rejeter cet incident ?" : "Rouvrir cet incident ?"
+              : confirmation.cible.is_active ? "Désactiver cet utilisateur ?" : "Réactiver cet utilisateur ?"}</h2>
+            <p id="coupure-modal-description">{confirmation.type === "incident"
+              ? "Cette action modifiera le statut de l’incident #" + confirmation.cible.id + " et sera enregistrée dans l’historique administratif."
+              : "Cette action modifiera l’accès à la plateforme pour le compte « " + confirmation.cible.username + " »."}</p>
+            <div className="coupure-modal__boutons">
+              <button className="coupure-bouton coupure-bouton--clair" ref={boutonAnnulerRef} disabled={operation} onClick={() => setConfirmation(null)}>Annuler</button>
+              <button className={"coupure-bouton " + (actionDestructive ? "coupure-bouton--danger" : "coupure-bouton--primaire")} disabled={operation} onClick={executerAction}>
+                {operation ? "Traitement…" : confirmation.type === "incident"
+                  ? confirmation.action === "rejeter" ? "Rejeter l’incident" : "Rouvrir l’incident"
+                  : confirmation.cible.is_active ? "Désactiver le compte" : "Réactiver le compte"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }
