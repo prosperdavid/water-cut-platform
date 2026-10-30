@@ -2,7 +2,20 @@ import { useId } from "react";
 
 /* Famille d'icônes Coupure : dessin SVG original, bleu et turquoise. */
 export default function CoupureIcon({ name = "logo", size = 24, title, className = "" }) {
+  // Utiliser le logo choisi par l'équipe ; les autres pictogrammes restent vectoriels.
   const id = useId().replace(/:/g, "");
+  if (name === "logo") {
+    return <img
+      src="/brand/coupure-logo.webp"
+      width={size}
+      height={size}
+      alt={title || ""}
+      aria-hidden={title ? undefined : true}
+      className={className}
+      decoding="async"
+      style={{ objectFit: "contain", verticalAlign: "middle", flexShrink: 0 }}
+    />;
+  }
   const fill = "url(#" + id + "-o)";
   const light = "url(#" + id + "-l)";
   const ripple = <path d="M9 58q23 9 46 0" stroke="#20cfe8" strokeWidth="2.5" strokeLinecap="round" fill="none" />;

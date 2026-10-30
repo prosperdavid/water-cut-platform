@@ -29,7 +29,7 @@ function Vitrine() {
           <div className="landing-logo"><CoupureIcon name="logo" size={39} /></div>
 
           <div>
-            <strong>Eau Toliara</strong>
+            <strong>Coupure</strong>
             <small>Suivi participatif</small>
           </div>
         </div>

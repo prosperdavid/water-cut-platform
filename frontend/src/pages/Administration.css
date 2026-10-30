@@ -320,3 +320,7 @@
 .coupure-cellule-zone__icone,.coupure-utilisateur__avatar{background:transparent}
 .coupure-reference{display:inline-flex;align-items:center;gap:4px}
 .coupure-modal__icone svg{overflow:visible}
+
+/* Logo officiel choisi : fichier WebP transparent (goutte coupée + ondulations). */
+.coupure-marque__logo img{display:block;max-width:100%;height:auto}
+.coupure-hero__goutte img{display:block;max-width:100%;max-height:100%;filter:drop-shadow(0 8px 14px rgba(0,16,43,.35))}
