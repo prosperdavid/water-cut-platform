@@ -21,7 +21,6 @@ import {
   Plus,
   Clock3,
   User,
-  MapPin,
   LocateFixed,
 } from "lucide-react";
 

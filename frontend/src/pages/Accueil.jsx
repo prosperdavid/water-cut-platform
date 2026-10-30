@@ -6,7 +6,6 @@ import CoupureIcon from "../components/CoupureIcon";
 import { API_BASE_URL } from "../services/apiConfig";
 
 import {
-  Droplets,
   Map,
   MapPin,
   Plus,

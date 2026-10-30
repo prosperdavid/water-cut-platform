@@ -14,7 +14,6 @@ import {
   ArrowRight,
   LogIn,
   UserPlus,
-  Clock3,
   Radio,
 } from "lucide-react";
 
