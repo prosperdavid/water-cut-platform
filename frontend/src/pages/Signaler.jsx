@@ -448,7 +448,7 @@ function Signaler() {
                 marginTop: "6px",
               }}
             >
-              📍 Quartier détecté automatiquement :{" "}
+              <MapPin size={14} aria-hidden="true" style={{ verticalAlign: "middle", marginRight: 5 }} /> Quartier détecté automatiquement :{" "}
               <strong>{quartierDetecte}</strong>
             </small>
           )}

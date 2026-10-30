@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { API_BASE_URL } from "../services/apiConfig";
 import "./Administration.css";
+import "./AdministrationPremium.css";
 import CoupureIcon from "../components/CoupureIcon";
 
 const STATUTS = {

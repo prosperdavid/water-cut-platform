@@ -110,11 +110,11 @@ function Vitrine() {
   <div className="landing-map-card">
     <div className="landing-map-header">
       <div className="landing-map-title">
-        <span className="map-title-icon">📍</span>
+        <span className="map-title-icon"><MapPin size={19} aria-hidden="true" /></span>
         <strong>Toliara</strong>
       </div>
 
-      <div className="map-live-badge">● En direct</div>
+      <div className="map-live-badge">Aperçu illustratif</div>
     </div>
 
     <div className="landing-map-body">
@@ -152,7 +152,7 @@ function Vitrine() {
 
       <div className="landing-map-side">
         <div className="map-stat-box">
-          <h4>Vue rapide</h4>
+          <h4>Exemple de données</h4>
 
           <div className="map-stat-item">
             <strong>3</strong>
@@ -172,7 +172,7 @@ function Vitrine() {
       </div>
     </div>
 
-    <div className="landing-map-legend">
+    <div className="landing-map-legend" aria-label="Légende de démonstration">
       <span><i className="dot orange"></i> À confirmer</span>
       <span><i className="dot red"></i> Coupure confirmée</span>
       <span><i className="dot green"></i> Eau rétablie</span>

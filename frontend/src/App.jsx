@@ -18,6 +18,7 @@ import AdminRoute from "./components/AdminRoute";
 import Administration from "./pages/Administration";
 
 import "./App.css";
+import "./premium.css";
 
 function App() {
   return (

@@ -98,7 +98,7 @@ function Accueil() {
 
   return (
     <main className="app-page">
-      <section className="mobile-app">
+      <section className="mobile-app home-dashboard">
 
         <header className="app-header">
           <div className="brand">
@@ -117,8 +117,7 @@ function Accueil() {
               Bonjour{" "}
               {profil?.first_name ||
                 profil?.username ||
-                "Habitant"}{" "}
-              👋
+                "Habitant"}
             </h1>
 
             <p>
@@ -131,7 +130,7 @@ function Accueil() {
         <section className="status-card">
           <div>
             <span className="small-title">
-              État de votre secteur
+              Situation signalée à Toliara
             </span>
 
             <h3>
@@ -186,12 +185,10 @@ function Accueil() {
               .slice(0, 2)
               .map((incident) => (
                 <article
-                  className="incident-card"
+                  className={"incident-card incident-card--" + incident.statut.toLowerCase()}
                   key={incident.id}
                 >
-                  <div className="incident-icon">
-                    !
-                  </div>
+                  <div className="incident-icon"><AlertTriangle size={22} aria-hidden="true" /></div>
 
                   <div className="incident-info">
                     <strong>
@@ -216,8 +213,8 @@ function Accueil() {
                         `/incidents/${incident.id}`
                       )
                     }
-                  >
-                    ›
+                   aria-label={"Voir l’incident " + incident.id}>
+                    <span aria-hidden="true">›</span>
                   </button>
                 </article>
               ))
