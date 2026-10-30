@@ -21,6 +21,9 @@ function Historique() {
 
   const [historique, setHistorique] = useState([]);
   const [filtre, setFiltre] = useState("TOUS");
+  const [onglet, setOnglet] = useState("MES");
+  const [tousIncidents, setTousIncidents] = useState([]);
+  const [erreur, setErreur] = useState("");
   const [chargement, setChargement] = useState(true);
 
   useEffect(() => {
@@ -31,29 +34,20 @@ function Historique() {
       return;
     }
 
-    axios
-      .get(
-       `${API_BASE_URL}/api/auth/history/`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
-      .then((response) => {
-        setHistorique(response.data);
-      })
-      .catch((error) => {
-        console.error(error);
-
-        if (error.response?.status === 401) {
-          localStorage.clear();
-          navigate("/");
-        }
-      })
-      .finally(() => {
-        setChargement(false);
-      });
+    const config = { headers: { Authorization: `Bearer ${token}` } };
+    Promise.all([
+      axios.get(`${API_BASE_URL}/api/auth/history/`, config),
+      axios.get(`${API_BASE_URL}/api/incidents/`, config),
+    ]).then(([userResult, incidentResult]) => {
+      const data=userResult.data;
+      setHistorique(Array.isArray(data)?data:(data?.results||[]));
+      const all=incidentResult.data;
+      setTousIncidents(Array.isArray(all)?all:(all?.results||[]));
+    }).catch(error => {
+      console.error(error);
+      if(error.response?.status===401)navigate("/connexion");
+      else setErreur("Impossible de charger l'historique. Réessayez lorsque le serveur sera disponible.");
+    }).finally(()=>setChargement(false));
   }, [navigate]);
 
   const afficherStatut = (statut) => {
@@ -95,7 +89,7 @@ function Historique() {
     );
   };
 
-  const elementsFiltres = historique.filter(
+  const elementsFiltres = (onglet==="MES" ? historique : tousIncidents).filter(
     (incident) => {
       if (filtre === "RETABLIS") {
         return incident.statut === "RETABLI";
@@ -128,53 +122,28 @@ function Historique() {
           <p>Vos participations récentes</p>
         </header>
 
-        <div className="history-filters">
-          <button
-            className={
-              filtre === "TOUS" ? "active" : ""
-            }
-            onClick={() => setFiltre("TOUS")}
-          >
-            Tous
-          </button>
-
-          <button
-            className={
-              filtre === "COUPURES"
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              setFiltre("COUPURES")
-            }
-          >
-            Coupures
-          </button>
-
-          <button
-            className={
-              filtre === "RETABLIS"
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              setFiltre("RETABLIS")
-            }
-          >
-            Rétablis
-          </button>
+        <div className="reference-history-tabs" role="tablist" aria-label="Choisir les signalements">
+          <button type="button" role="tab" aria-selected={onglet==="MES"} className={onglet==="MES"?"selected":""}
+            onClick={()=>{setOnglet("MES");setFiltre("TOUS");}}>Mes signalements</button>
+          <button type="button" role="tab" aria-selected={onglet==="TOUS"} className={onglet==="TOUS"?"selected":""}
+            onClick={()=>{setOnglet("TOUS");setFiltre("TOUS");}}>Tous les incidents</button>
         </div>
-
+        {erreur && <div className="report-error" role="alert">{erreur}</div>}
+        <div className="reference-history-filters" aria-label="Filtrer par statut">
+          <button type="button" className={filtre==="TOUS"?"active":""} onClick={()=>setFiltre("TOUS")}>Tous</button>
+          <button type="button" className={filtre==="COUPURES"?"active":""} onClick={()=>setFiltre("COUPURES")}>Coupures</button>
+          <button type="button" className={filtre==="RETABLIS"?"active":""} onClick={()=>setFiltre("RETABLIS")}>Rétablis</button>
+        </div>
         <section className="history-list">
           {elementsFiltres.length === 0 ? (
             <div className="history-empty">
               <ClipboardList size={40} aria-hidden="true" />
-              <strong>Aucune participation pour le moment</strong>
-              <p>Vos signalements et vos réponses aux incidents apparaîtront ici lorsque vous participerez au suivi.</p>
+              <strong>Aucun incident à afficher</strong>
+              <p>Les incidents correspondant à ce filtre apparaîtront ici lorsqu’ils seront disponibles.</p>
             </div>
           ) : (
             elementsFiltres.map((incident) => (
-              <article
+              <button type="button"
                 key={incident.id}
                 className={`history-card history-${incident.statut.toLowerCase()}`}
                 onClick={() =>
@@ -224,7 +193,7 @@ function Historique() {
                   </span>
                 </div>
 
-                <div className="history-user-info">
+                {onglet==="MES" && <div className="history-user-info">
                   <p>
                     <User size={17} />
 
@@ -247,8 +216,8 @@ function Historique() {
                       )}
                     </strong>
                   </p>
-                </div>
-              </article>
+                </div>}
+              </button>
             ))
           )}
         </section>
