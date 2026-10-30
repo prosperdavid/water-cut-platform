@@ -14,6 +14,9 @@ import {
   User,
   AlertTriangle,
   ChevronRight,
+  CheckCircle2,
+  ShieldAlert,
+  Activity,
 } from "lucide-react";
 
 function Accueil() {
@@ -91,6 +94,10 @@ function Accueil() {
     );
   }
 
+  const aConfirmer = incidents.filter((incident) => incident.statut === "A_CONFIRMER").length;
+  const actifs = incidents.filter((incident) => incident.statut === "ACTIF").length;
+  const retablis = incidents.filter((incident) => incident.statut === "RETABLI").length;
+
   const incidentsEnCours = incidents.filter(
     (incident) =>
       incident.statut !== "RETABLI" &&
@@ -142,9 +149,24 @@ function Accueil() {
 
           <span className="status-badge">
             {incidentsEnCours.length > 0
-              ? "Perturbé"
-              : "Normal"}
+              ? "Signalements en cours"
+              : "Aucune coupure en cours déclarée"}
           </span>
+        </section>
+
+        <section className="home-highlights" aria-label="Synthèse des signalements">
+          <article className="home-highlights__item">
+            <Activity size={22} aria-hidden="true" />
+            <div><strong>{actifs}</strong><span>Coupures confirmées</span></div>
+          </article>
+          <article className="home-highlights__item home-highlights__item--warn">
+            <ShieldAlert size={22} aria-hidden="true" />
+            <div><strong>{aConfirmer}</strong><span>À confirmer</span></div>
+          </article>
+          <article className="home-highlights__item home-highlights__item--safe">
+            <CheckCircle2 size={22} aria-hidden="true" />
+            <div><strong>{retablis}</strong><span>Eau rétablie</span></div>
+          </article>
         </section>
 
         <section className="map-preview">
@@ -179,7 +201,7 @@ function Accueil() {
 
           {incidents.length === 0 ? (
             <p className="empty-message">
-              Aucun incident pour le moment.
+              Aucun incident signalé pour le moment.
             </p>
           ) : (
             incidents

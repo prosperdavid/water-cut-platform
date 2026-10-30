@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   MessageCircle,
+  ClipboardList,
 } from "lucide-react";
 
 function Historique() {
@@ -167,7 +168,9 @@ function Historique() {
         <section className="history-list">
           {elementsFiltres.length === 0 ? (
             <div className="history-empty">
-              Aucun incident dans cet historique.
+              <ClipboardList size={40} aria-hidden="true" />
+              <strong>Aucune participation pour le moment</strong>
+              <p>Vos signalements et vos réponses aux incidents apparaîtront ici lorsque vous participerez au suivi.</p>
             </div>
           ) : (
             elementsFiltres.map((incident) => (

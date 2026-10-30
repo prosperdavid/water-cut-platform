@@ -155,8 +155,8 @@ function Vitrine() {
           <h4>Exemple de données</h4>
 
           <div className="map-stat-item">
-            <strong>3</strong>
-            <span>incidents actifs</span>
+            <strong>03</strong>
+            <span>incidents fictifs</span>
           </div>
 
           <div className="map-stat-item">
@@ -459,7 +459,7 @@ function Vitrine() {
       <footer className="landing-footer">
         <div>
           <Droplets size={20} />
-          <strong>Eau Toliara</strong>
+          <strong>Coupure</strong>
         </div>
 
         <p>
