@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Search, Bell, MapPin, LayoutDashboard, Map, Plus, Clock3, UserRound, Info, Settings2, ChevronDown, X, ArrowRight } from "lucide-react";
+import { Search, Bell, MapPin, Settings2, LayoutDashboard, Map, Plus, Clock3, UserRound, Info, Settings2, ChevronDown, X, ArrowRight } from "lucide-react";
 import CoupureIcon from "./CoupureIcon";
 import { API_BASE_URL } from "../services/apiConfig";
 
@@ -74,6 +74,7 @@ export default function ResidentLayout() {
         <div className="reference-sidebar-separator" />
         <p className="reference-sidebar-label">PLATEFORME</p>
         <NavLink to="/" className="reference-side-link reference-side-secondary"><Info size={21} aria-hidden="true"/>À propos du suivi</NavLink>
+        {profile?.is_staff && <NavLink to="/administration" className="reference-side-link reference-side-secondary"><Settings2 size={21} aria-hidden="true"/>Administration</NavLink>}
         <div className="reference-sidebar-bottom">
           <div className="reference-skyline" aria-hidden="true" />
           <strong>TOLIARA, MADAGASCAR</strong>
