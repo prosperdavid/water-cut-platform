@@ -309,3 +309,14 @@
 @media (prefers-reduced-motion: reduce) {
   .coupure-admin *, .coupure-admin *::before, .coupure-admin *::after { transition: none !important; animation: none !important; }
 }
+
+/* Icônes Coupure : intégration SVG */
+.coupure-marque__logo{background:none;box-shadow:none;width:44px;height:44px}
+.coupure-navigation__item>svg{flex-shrink:0}
+.coupure-icon-badge{background:transparent}
+.coupure-hero__goutte{background:none;border:none;box-shadow:none;transform:none;backdrop-filter:none}
+.coupure-hero__goutte svg{filter:drop-shadow(0 8px 16px rgba(0,20,48,.35))}
+.coupure-carte__icone{background:transparent;padding:0}
+.coupure-cellule-zone__icone,.coupure-utilisateur__avatar{background:transparent}
+.coupure-reference{display:inline-flex;align-items:center;gap:4px}
+.coupure-modal__icone svg{overflow:visible}

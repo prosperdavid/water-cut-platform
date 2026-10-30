@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../services/apiConfig";
+import CoupureIcon from "../components/CoupureIcon";
 
 import {
   Home,
@@ -204,7 +205,7 @@ function Historique() {
                 </div>
 
                 <div className="history-dates">
-                  <CalendarDays size={18} />
+                  <CoupureIcon name="reports" size={18} />
 
                   <span>
                     {formaterDate(

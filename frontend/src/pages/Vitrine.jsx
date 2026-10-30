@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import toliaraMer from "../assets/toliara-mer.png";
+import CoupureIcon from "../components/CoupureIcon";
 import toliaraVille from "../assets/toliara-ville.png";
 
 import {
@@ -26,9 +27,7 @@ function Vitrine() {
       {/* Navigation */}
       <header className="landing-navbar">
         <div className="landing-brand">
-          <div className="landing-logo">
-            <Droplets />
-          </div>
+          <div className="landing-logo"><CoupureIcon name="logo" size={39} /></div>
 
           <div>
             <strong>Eau Toliara</strong>

@@ -2,14 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
-  Activity, AlertCircle, AlertTriangle, ArrowLeft,
-  ArrowRight, Bell, Check, CheckCircle2, ChevronRight, CircleHelp,
-  Clock3, Droplets, LayoutDashboard, LogOut, MapPin, Menu,
-  RefreshCw, Search, ShieldCheck, SlidersHorizontal, Sparkles, Users,
+  AlertCircle, AlertTriangle, ArrowLeft,
+  ArrowRight, Check, CheckCircle2, ChevronRight, CircleHelp,
+  LogOut, MapPin, Menu,
+  RefreshCw, Search, ShieldCheck, Sparkles, Users,
   Waves, X, XCircle,
 } from "lucide-react";
 import { API_BASE_URL } from "../services/apiConfig";
 import "./Administration.css";
+import CoupureIcon from "../components/CoupureIcon";
 
 const STATUTS = {
   A_CONFIRMER: { libelle: "À confirmer", couleur: "attente" },
@@ -20,9 +21,9 @@ const STATUTS = {
 };
 
 const NAVIGATION = [
-  { key: "tableau", titre: "Vue d’ensemble", icon: LayoutDashboard },
-  { key: "incidents", titre: "Incidents", icon: AlertTriangle },
-  { key: "utilisateurs", titre: "Utilisateurs", icon: Users },
+  { key: "tableau", titre: "Vue d’ensemble", icon: "dashboard" },
+  { key: "incidents", titre: "Incidents", icon: "incidents" },
+  { key: "utilisateurs", titre: "Utilisateurs", icon: "users" },
 ];
 
 function dateFR(valeur, avecHeure = false) {
@@ -60,8 +61,8 @@ function Statut({ valeur }) {
   );
 }
 
-function IconBadge({ icon: Icon, couleur }) {
-  return <span className={"coupure-icon-badge coupure-icon-badge--" + couleur}><Icon size={20} strokeWidth={2} /></span>;
+function IconBadge({ icon, couleur }) {
+  return <span className={"coupure-icon-badge coupure-icon-badge--" + couleur}><CoupureIcon name={icon} size={30} /></span>;
 }
 
 function EmptyState({ icon: Icon = Search, titre, description }) {
@@ -216,14 +217,14 @@ export default function Administration() {
     <main className="coupure-admin">
       <aside className={"coupure-sidebar" + (menuMobile ? " coupure-sidebar--ouvert" : "")}>
         <div className="coupure-marque">
-          <div className="coupure-marque__logo"><Droplets size={24} strokeWidth={2.5} /></div>
+          <div className="coupure-marque__logo"><CoupureIcon name="logo" size={42} /></div>
           <div><span className="coupure-marque__nom">coupure<span>.</span></span><small>ESPACE ADMINISTRATEUR</small></div>
         </div>
 
         <div className="coupure-sidebar__nav-wrap">
           <p className="coupure-sidebar__titre">MENU PRINCIPAL</p>
           <nav className="coupure-navigation" aria-label="Navigation administrateur">
-            {NAVIGATION.map(({ key, titre, icon: Icon }) => (
+            {NAVIGATION.map(({ key, titre, icon }) => (
               <button
                 type="button"
                 key={key}
@@ -231,7 +232,7 @@ export default function Administration() {
                 aria-current={onglet === key ? "page" : undefined}
                 onClick={() => naviguer(key)}
               >
-                <Icon size={19} strokeWidth={2} /><span>{titre}</span>
+                <CoupureIcon name={icon} size={23} /><span>{titre}</span>
                 {key === "incidents" && attente > 0 && <span className="coupure-navigation__nombre">{attente}</span>}
                 {onglet === key && <span className="coupure-navigation__indicateur" />}
               </button>
@@ -241,7 +242,7 @@ export default function Administration() {
 
         <div className="coupure-sidebar__bas">
           <div className="coupure-sidebar__notice">
-            <div className="coupure-sidebar__notice-icon"><Waves size={20} /></div>
+            <div className="coupure-sidebar__notice-icon"><CoupureIcon name="zones" size={30} /></div>
             <strong>Le suivi, ensemble.</strong>
             <p>Une information citoyenne plus claire, quartier par quartier.</p>
           </div>
@@ -264,7 +265,7 @@ export default function Administration() {
           <div className="coupure-topbar__droite">
             <span className="coupure-topbar__lieu"><MapPin size={15} /> Toliara, Madagascar</span>
             <span className="coupure-topbar__separateur" />
-            <span className="coupure-topbar__profil" title="Session administrateur"><ShieldCheck size={16} /><span>Admin</span></span>
+            <span className="coupure-topbar__profil" title="Session administrateur"><CoupureIcon name="security" size={26} /><span>Admin</span></span>
           </div>
         </header>
 
@@ -303,7 +304,7 @@ export default function Administration() {
                 <div className="coupure-hero__illustration" aria-hidden="true">
                   <div className="coupure-hero__cercle coupure-hero__cercle--externe" />
                   <div className="coupure-hero__cercle coupure-hero__cercle--interne" />
-                  <div className="coupure-hero__goutte"><Droplets size={88} strokeWidth={1.5} /></div>
+                  <div className="coupure-hero__goutte"><CoupureIcon name="logo" size={110} /></div>
                   <span className="coupure-hero__decor coupure-hero__decor--un" />
                   <span className="coupure-hero__decor coupure-hero__decor--deux" />
                 </div>
@@ -311,17 +312,17 @@ export default function Administration() {
               </section>
 
               <section className="coupure-metriques" aria-label="Indicateurs de la plateforme">
-                <Metrique icon={Waves} couleur="bleu" libelle="Incidents déclarés" valeur={total} details="Total enregistré" />
-                <Metrique icon={Activity} couleur="corail" libelle="Incidents en cours" valeur={enCours} details="En cours de suivi" />
-                <Metrique icon={Clock3} couleur="orange" libelle="À confirmer" valeur={attente} details="À examiner" />
-                <Metrique icon={Users} couleur="violet" libelle="Habitants inscrits" valeur={tableau.nombre_utilisateurs} details="Comptes habitants" />
+                <Metrique icon="logo" couleur="bleu" libelle="Incidents déclarés" valeur={total} details="Total enregistré" />
+                <Metrique icon="maintenance" couleur="corail" libelle="Incidents en cours" valeur={enCours} details="En cours de suivi" />
+                <Metrique icon="incidents" couleur="orange" libelle="À confirmer" valeur={attente} details="À examiner" />
+                <Metrique icon="users" couleur="violet" libelle="Habitants inscrits" valeur={tableau.nombre_utilisateurs} details="Comptes habitants" />
               </section>
 
               <div className="coupure-grille-dashboard">
                 <section className="coupure-carte">
                   <div className="coupure-carte__entete">
                     <div><span className="coupure-section-label">VUE GLOBALE</span><h3>État des signalements</h3><p>Répartition des incidents selon leur statut.</p></div>
-                    <span className="coupure-carte__badge"><Activity size={14} /> {total} au total</span>
+                    <span className="coupure-carte__badge"><CoupureIcon name="dashboard" size={16} /> {total} au total</span>
                   </div>
                   <div className="coupure-repartition">
                     {Object.entries(STATUTS).map(([code, meta]) => {
@@ -337,18 +338,18 @@ export default function Administration() {
                       );
                     })}
                   </div>
-                  <div className="coupure-carte__pied"><MapPin size={16} /> <span>{tableau.nombre_zones} quartier(s) enregistré(s) dans la plateforme</span></div>
+                  <div className="coupure-carte__pied"><CoupureIcon name="zones" size={18} /> <span>{tableau.nombre_zones} quartier(s) enregistré(s) dans la plateforme</span></div>
                 </section>
 
                 <section className="coupure-carte">
                   <div className="coupure-carte__entete">
                     <div><span className="coupure-section-label">ACTIVITÉ RÉCENTE</span><h3>Derniers incidents</h3><p>Les déclarations les plus récentes.</p></div>
-                    <span className="coupure-carte__icone"><Bell size={18} /></span>
+                    <span className="coupure-carte__icone"><CoupureIcon name="notifications" size={28} /></span>
                   </div>
                   <div className="coupure-activite">
                     {tableau.incidents_recents?.length ? tableau.incidents_recents.map((incident) => (
                       <div className="coupure-activite__ligne" key={incident.id}>
-                        <div className="coupure-activite__repere"><MapPin size={16} /></div>
+                        <div className="coupure-activite__repere"><CoupureIcon name="zones" size={27} /></div>
                         <div className="coupure-activite__corps">
                           <div className="coupure-activite__titre"><strong>{incident.zone_nom || "Zone inconnue"}</strong><span>#{incident.id}</span></div>
                           <p>{dateFR(incident.date_creation, true)}</p>
@@ -378,7 +379,7 @@ export default function Administration() {
                   <input value={rechercheIncident} onChange={(e) => setRechercheIncident(e.target.value)} placeholder="Rechercher par quartier ou numéro…" />
                   {rechercheIncident && <button type="button" aria-label="Effacer la recherche" onClick={() => setRechercheIncident("")}><X size={16} /></button>}
                 </label>
-                <label className="coupure-select"><SlidersHorizontal size={18} /><span className="coupure-visually-hidden">Filtrer par statut</span>
+                <label className="coupure-select"><CoupureIcon name="settings" size={22} /><span className="coupure-visually-hidden">Filtrer par statut</span>
                   <select value={filtre} onChange={(e) => setFiltre(e.target.value)}>
                     <option value="TOUS">Tous les statuts</option>
                     {Object.entries(STATUTS).map(([code, meta]) => <option value={code} key={code}>{meta.libelle}</option>)}
@@ -393,8 +394,8 @@ export default function Administration() {
                       const confiance = Math.max(0, Math.min(100, Number(incident.score_confiance) || 0));
                       return (
                         <tr key={incident.id}>
-                          <td><span className="coupure-reference">#{incident.id}</span></td>
-                          <td><div className="coupure-cellule-zone"><span className="coupure-cellule-zone__icone"><MapPin size={17} /></span><strong>{incident.zone_nom || "Zone inconnue"}</strong></div></td>
+                          <td><span className="coupure-reference"><CoupureIcon name="reports" size={17} /> #{incident.id}</span></td>
+                          <td><div className="coupure-cellule-zone"><span className="coupure-cellule-zone__icone"><CoupureIcon name="zones" size={28} /></span><strong>{incident.zone_nom || "Zone inconnue"}</strong></div></td>
                           <td><Statut valeur={incident.statut} /></td>
                           <td><div className="coupure-confiance"><strong>{Math.round(confiance)} %</strong><div className="coupure-confiance__barre"><span style={{ width: confiance + "%" }} /></div></div></td>
                           <td className="coupure-date">{dateFR(incident.date_creation)}</td>
@@ -436,7 +437,7 @@ export default function Administration() {
                   <tbody>
                     {utilisateursFiltres.map((compte) => (
                       <tr key={compte.id}>
-                        <td><div className="coupure-utilisateur"><span className="coupure-utilisateur__avatar">{(compte.username || "?").charAt(0).toLocaleUpperCase("fr-FR")}</span><div><strong>{compte.username}</strong><small>Habitant</small></div></div></td>
+                        <td><div className="coupure-utilisateur"><span className="coupure-utilisateur__avatar"><CoupureIcon name="users" size={27} /></span><div><strong>{compte.username}</strong><small>Habitant</small></div></div></td>
                         <td>{[compte.first_name, compte.last_name].filter(Boolean).join(" ") || "—"}</td>
                         <td className="coupure-date">{dateFR(compte.date_joined)}</td>
                         <td><span className={"coupure-etat " + (compte.is_active ? "coupure-etat--retabli" : "coupure-etat--rejete")}><span className="coupure-etat__point" />{compte.is_active ? "Actif" : "Désactivé"}</span></td>
@@ -457,7 +458,7 @@ export default function Administration() {
       {confirmation && (
         <div className="coupure-modal-fond" onMouseDown={(e) => { if (e.target === e.currentTarget && !operation) setConfirmation(null); }}>
           <section className="coupure-modal" role="dialog" aria-modal="true" aria-labelledby="coupure-modal-titre" aria-describedby="coupure-modal-description">
-            <div className={"coupure-modal__icone" + (actionDestructive ? " coupure-modal__icone--danger" : "")}>{actionDestructive ? <AlertTriangle size={25} /> : <RefreshCw size={24} />}</div>
+            <div className={"coupure-modal__icone" + (actionDestructive ? " coupure-modal__icone--danger" : "")}>{actionDestructive ? <CoupureIcon name="incidents" size={34} /> : <CoupureIcon name="maintenance" size={34} />}</div>
             <button className="coupure-modal__fermer" aria-label="Fermer" disabled={operation} onClick={() => setConfirmation(null)}><X size={19} /></button>
             <h2 id="coupure-modal-titre">{confirmation.type === "incident"
               ? confirmation.action === "rejeter" ? "Rejeter cet incident ?" : "Rouvrir cet incident ?"

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import MiniMap from "../components/MiniMap";
+import CoupureIcon from "../components/CoupureIcon";
 import { API_BASE_URL } from "../services/apiConfig";
 
 import {
@@ -103,7 +104,7 @@ function Accueil() {
         <header className="app-header">
           <div className="brand">
             <div className="brand-icon">
-              <Droplets size={32} />
+              <CoupureIcon name="logo" size={32} />
             </div>
 
             <div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../services/apiConfig";
+import CoupureIcon from "../components/CoupureIcon";
 
 import {
   MapContainer,
@@ -339,7 +340,7 @@ function Carte() {
           <h1>Carte des incidents</h1>
 
           <p>
-            <MapPin size={18} />
+            <CoupureIcon name="zones" size={18} />
             Toliara
           </p>
         </header>
@@ -418,7 +419,7 @@ function Carte() {
             className="toliara-button"
             onClick={retournerToliara}
           >
-            <MapPin size={18} />
+            <CoupureIcon name="zones" size={18} />
             Revenir à Toliara
           </button>
         </div>

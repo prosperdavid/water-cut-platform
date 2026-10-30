@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../services/apiConfig";
 import {
-  Droplets,
   User,
   LockKeyhole,
   Eye,
@@ -12,6 +11,7 @@ import {
 } from "lucide-react";
 
 import axios from "axios";
+import CoupureIcon from "../components/CoupureIcon";
 import "../App.css";
 
 function Login() {
@@ -71,7 +71,7 @@ function Login() {
       <section className="login-container">
         <div className="brand">
           <div className="brand-icon">
-            <Droplets size={34} />
+            <CoupureIcon name="logo" size={40} />
           </div>
 
           <div>
