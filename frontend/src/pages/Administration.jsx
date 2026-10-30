@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
-  Activity, AlertCircle, AlertTriangle, ArrowDownRight, ArrowLeft,
+  Activity, AlertCircle, AlertTriangle, ArrowLeft,
   ArrowRight, Bell, Check, CheckCircle2, ChevronRight, CircleHelp,
-  Clock3, Droplets, LayoutDashboard, LogOut, MapPin, Menu, MoreHorizontal,
+  Clock3, Droplets, LayoutDashboard, LogOut, MapPin, Menu,
   RefreshCw, Search, ShieldCheck, SlidersHorizontal, Sparkles, Users,
   Waves, X, XCircle,
 } from "lucide-react";
@@ -42,6 +42,12 @@ function erreurAPI(erreur) {
   if (typeof contenu?.action === "string") return contenu.action;
   if (Array.isArray(contenu?.action)) return contenu.action.join(" ");
   return "Impossible de communiquer avec le serveur. Vérifiez votre connexion et réessayez.";
+}
+
+function config() {
+  return {
+    headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+  };
 }
 
 function Statut({ valeur }) {
@@ -101,10 +107,6 @@ export default function Administration() {
   const [derniereMaj, setDerniereMaj] = useState(null);
   const boutonAnnulerRef = useRef(null);
   const client = useMemo(() => axios.create({ baseURL: API_BASE_URL }), []);
-
-  const config = () => ({
-    headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
-  });
 
   const charger = useCallback(async () => {
     setChargement(true);
