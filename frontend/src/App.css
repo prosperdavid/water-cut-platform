@@ -3299,3 +3299,6 @@ body {
     right: 70px;
   }
 }
+/* Logo Coupure harmonisé sur la connexion, l'accueil et la vitrine. */
+.brand-icon:has(img[src*="coupure-logo"]),.landing-logo:has(img[src*="coupure-logo"]){background:#fff;border:1px solid #e2f0fb;box-shadow:0 4px 16px rgba(9,94,170,.12)}
+.brand-icon img,.landing-logo img{display:block;max-width:100%;height:auto}

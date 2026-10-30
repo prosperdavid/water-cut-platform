@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'zones',
     'incidents',
     'reports',
+    'administration',
 ]
 
 MIDDLEWARE = [

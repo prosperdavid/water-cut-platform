@@ -1,17 +1,20 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import toliaraMer from "../assets/toliara-mer.png";
 import { API_BASE_URL } from "../services/apiConfig";
 import {
-  Droplets,
   User,
   LockKeyhole,
   Eye,
   EyeOff,
   LogIn,
   UserPlus,
+  MapPin,
+  ShieldCheck,
 } from "lucide-react";
 
 import axios from "axios";
+import CoupureIcon from "../components/CoupureIcon";
 import "../App.css";
 
 function Login() {
@@ -47,7 +50,16 @@ function Login() {
         response.data.refresh
       );
 
-      navigate("/accueil");
+      let destination = "/accueil";
+      try {
+        await axios.get(API_BASE_URL + "/api/administration/me/", {
+          headers: { Authorization: "Bearer " + response.data.access },
+        });
+        destination = "/administration";
+      } catch {
+        // Les habitants continuent vers l'accueil.
+      }
+      navigate(destination);
     } catch {
       setErreur(
         "Nom d'utilisateur ou mot de passe incorrect."
@@ -59,48 +71,47 @@ function Login() {
 
   return (
     <main className="login-page">
-      <section className="login-container">
-        <div className="brand">
-          <div className="brand-icon">
-            <Droplets size={34} />
+      <section className="login-container login-layout">
+        <aside className="login-aside" style={{ backgroundImage: `linear-gradient(155deg, rgba(5, 36, 54, .38), rgba(4, 31, 48, .88)), url(${toliaraMer})` }}>
+          <div className="login-aside-brand">
+            <span className="login-aside-logo"><CoupureIcon name="logo" size={43} /></span>
+            <span><strong>Coupure</strong><small>L’EAU, EN COMMUN</small></span>
+          </div>
+          <div className="login-aside-copy">
+            <span className="login-aside-location"><MapPin size={15} /> TOLIARA · MADAGASCAR</span>
+            <h2>L’eau en commun,<br />quartier par quartier.</h2>
+            <p>Suivez les coupures, partagez une information utile et contribuez au retour de l’eau dans votre quartier.</p>
+          </div>
+          <div className="login-aside-note">
+            <span className="login-aside-note-icon"><ShieldCheck size={19} /></span>
+            <span><strong>Un suivi construit ensemble</strong><small>Les habitants s’informent et vérifient les signalements.</small></span>
+          </div>
+        </aside>
+
+        <div className="login-content">
+          <div className="login-heading">
+            <span className="login-eyebrow">VOTRE ESPACE HABITANT</span>
+            <h1>Heureux de vous revoir.</h1>
+            <p>Connectez-vous pour consulter la situation de votre quartier.</p>
           </div>
 
-          <div>
-            <h2>Suivi Coupure Eau</h2>
-            <p>Toliara</p>
-          </div>
-        </div>
-
-        <div className="hero">
-          <h1>Bienvenue</h1>
-
-          <p>
-            Suivez les coupures d'eau
-            <br />
-            dans votre quartier
-          </p>
-        </div>
-
-        <form
-          className="login-card"
-          onSubmit={connecter}
-        >
+          <form className="login-card login-form" onSubmit={connecter}>
           {erreur && (
-            <div className="error-message">
+            <div className="error-message" role="alert">
               {erreur}
             </div>
           )}
 
-          <label>
-            Nom d'utilisateur
-          </label>
+          <label htmlFor="login-username">Nom d’utilisateur</label>
 
           <div className="input-group">
-            <User size={21} />
+            <User size={19} aria-hidden="true" />
 
             <input
+              id="login-username"
               type="text"
-              placeholder="Votre nom d'utilisateur"
+              autoComplete="username"
+              placeholder="Votre nom d’utilisateur"
               value={username}
               onChange={(e) =>
                 setUsername(e.target.value)
@@ -109,17 +120,19 @@ function Login() {
             />
           </div>
 
-          <label>Mot de passe</label>
+          <label htmlFor="login-password">Mot de passe</label>
 
           <div className="input-group">
-            <LockKeyhole size={21} />
+            <LockKeyhole size={19} aria-hidden="true" />
 
             <input
+              id="login-password"
               type={
                 showPassword
                   ? "text"
                   : "password"
               }
+              autoComplete="current-password"
               placeholder="Votre mot de passe"
               value={password}
               onChange={(e) =>
@@ -131,6 +144,7 @@ function Login() {
             <button
               type="button"
               className="eye-button"
+              aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
               onClick={() =>
                 setShowPassword(
                   !showPassword
@@ -146,7 +160,7 @@ function Login() {
           </div>
 
           <button
-            className="login-button"
+            className="login-button login-submit"
             type="submit"
             disabled={loading}
           >
@@ -177,7 +191,9 @@ function Login() {
           >
             Mot de passe oublié ?
           </button>
-        </form>
+          </form>
+          <p className="login-back-link"><button type="button" onClick={() => navigate("/")}>Retourner à l’accueil</button></p>
+        </div>
       </section>
     </main>
   );

@@ -14,8 +14,15 @@ import Historique from "./pages/Historique";
 import Profil from "./pages/Profil";
 import Inscription from "./pages/Inscription";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+import Administration from "./pages/Administration";
+import ResidentLayout from "./components/ResidentLayout";
 
 import "./App.css";
+import "./premium.css";
+import "./reference.css";
+import "./reference-pages.css";
+import "./modern.css";
 
 function App() {
   return (
@@ -39,35 +46,40 @@ function App() {
 
         {/* Partie réservée aux utilisateurs connectés */}
         <Route element={<ProtectedRoute />}>
-          <Route
-            path="/accueil"
-            element={<Accueil />}
-          />
+          <Route element={<ResidentLayout />}>
+            <Route
+              path="/accueil"
+              element={<Accueil />}
+            />
 
-          <Route
-            path="/carte"
-            element={<Carte />}
-          />
+            <Route
+              path="/carte"
+              element={<Carte />}
+            />
 
-          <Route
-            path="/signaler"
-            element={<Signaler />}
-          />
+            <Route
+              path="/signaler"
+              element={<Signaler />}
+            />
 
-          <Route
-            path="/incidents/:id"
-            element={<IncidentDetail />}
-          />
+            <Route
+              path="/incidents/:id"
+              element={<IncidentDetail />}
+            />
 
-          <Route
-            path="/historique"
-            element={<Historique />}
-          />
+            <Route
+              path="/historique"
+              element={<Historique />}
+            />
 
-          <Route
-            path="/profil"
-            element={<Profil />}
-          />
+            <Route
+              path="/profil"
+              element={<Profil />}
+            />
+          </Route>
+        </Route>
+        <Route element={<AdminRoute />}>
+          <Route path="/administration" element={<Administration />} />
         </Route>
       </Routes>
     </BrowserRouter>

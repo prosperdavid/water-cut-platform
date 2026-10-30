@@ -29,6 +29,8 @@ function Signaler() {
   const [rechercheQuartier, setRechercheQuartier] = useState(false);
 
   const [depuis, setDepuis] = useState("0");
+  const [etape, setEtape] = useState(1);
+  const [typeSignalement, setTypeSignalement] = useState("COUPURE");
   const [commentaire, setCommentaire] = useState("");
   const [chargement, setChargement] = useState(false);
 
@@ -328,254 +330,143 @@ function Signaler() {
 
   return (
     <main className="app-page">
-      <section className="mobile-app report-page">
+      <section className="mobile-app report-page reference-report-page">
         <header className="report-header">
-          <button onClick={() => navigate("/accueil")}>
-            <ArrowLeft />
-          </button>
-
-          <h1>Signaler une coupure</h1>
+          <button type="button" aria-label="Revenir à l'accueil" onClick={() => navigate("/accueil")}><ArrowLeft size={21} /></button>
+          <div>
+            <h1>Signaler une coupure</h1>
+            <p>Votre information aide votre quartier.</p>
+          </div>
         </header>
 
-        <section className="gps-card">
-          <div className="gps-icon">
-            <MapPin />
-          </div>
+        <div className="reference-steps" aria-label="Étapes du signalement">
+          {[["Informations",1],["Localisation",2],["Confirmation",3]].map(([label,index])=>(
+            <div key={index} className={"reference-step" + (etape===index?" current":"") + (etape>index?" completed":"")}>
+              <span className="reference-step-number">{index}</span><small>{label}</small>
+            </div>
+          ))}
+        </div>
 
-          <div className="gps-info">
-            <strong>Votre position</strong>
+        <form className="report-form reference-report-form" onSubmit={envoyerSignalement}>
+          {erreur && <div className="report-error" role="alert">{erreur}</div>}
+          {message && <div className="report-success" role="status">{message}</div>}
 
-            {position ? (
-              <>
-                <span className="gps-ok">
-                  ● Position détectée
-                </span>
-
-                <small>
-                  {position.latitude.toFixed(6)},{" "}
-                  {position.longitude.toFixed(6)}
-                </small>
-
-                {position.accuracy && (
-                  <small>
-                    Précision : environ{" "}
-                    {Math.round(position.accuracy)} m
-                  </small>
+          {etape===1 && (
+            <div className="reference-report-step-panel">
+              <div className="reference-field-group">
+                <h2>Type de signalement</h2>
+                <div className="reference-report-options" role="radiogroup" aria-label="Type de signalement">
+                  <button type="button" role="radio" aria-checked={typeSignalement==="COUPURE"}
+                    className={"reference-report-option" + (typeSignalement==="COUPURE"?" selected":"")}
+                    onClick={()=>setTypeSignalement("COUPURE")}>
+                    <span className="reference-option-icon danger"><MapPin size={20}/></span>
+                    <span><strong>Coupure d'eau</strong><small>Actuellement sans eau</small></span>
+                    <span className="reference-option-check">{typeSignalement==="COUPURE"?"✓":""}</span>
+                  </button>
+                  <button type="button" role="radio" aria-checked={typeSignalement==="RETOUR"}
+                    className={"reference-report-option" + (typeSignalement==="RETOUR"?" selected":"")}
+                    onClick={()=>setTypeSignalement("RETOUR")}>
+                    <span className="reference-option-icon success"><Clock3 size={20}/></span>
+                    <span><strong>Retour de l'eau</strong><small>Confirmer un rétablissement</small></span>
+                    <span className="reference-option-check">{typeSignalement==="RETOUR"?"✓":""}</span>
+                  </button>
+                  <button type="button" role="radio" aria-checked={typeSignalement==="AUTRE"}
+                    className={"reference-report-option" + (typeSignalement==="AUTRE"?" selected":"")}
+                    onClick={()=>setTypeSignalement("AUTRE")}>
+                    <span className="reference-option-icon neutral"><MessageSquare size={20}/></span>
+                    <span><strong>Autre</strong><small>Autre problème lié à l'eau</small></span>
+                    <span className="reference-option-check">{typeSignalement==="AUTRE"?"✓":""}</span>
+                  </button>
+                </div>
+                {typeSignalement!=="COUPURE" && (
+                  <div className="reference-report-info">
+                    {typeSignalement==="RETOUR"
+                      ? "Pour confirmer le retour de l'eau, ouvrez l'incident concerné sur la carte et indiquez que vous avez de l'eau."
+                      : "Les autres types de problèmes ne disposent pas encore d'un formulaire dédié. Seules les coupures peuvent être enregistrées ici."}
+                    {typeSignalement==="RETOUR"&&
+                      <button type="button" onClick={()=>navigate("/carte")}>Voir les incidents <ArrowLeft size={14} /></button>}
+                  </div>
                 )}
+              </div>
 
-                {rechercheQuartier ? (
-                  <small>
-                    Recherche du quartier...
-                  </small>
-                ) : quartierDetecte ? (
-                  <small>
-                    Quartier : {quartierDetecte}
-                  </small>
-                ) : null}
-              </>
-            ) : recherchePosition ? (
-              <span>
-                Recherche de votre position...
-              </span>
-            ) : (
-              <span>Position non détectée</span>
-            )}
-          </div>
-
-          <button
-            type="button"
-            className="refresh-location"
-            onClick={() => detecterPosition()}
-            disabled={
-              recherchePosition || rechercheQuartier
-            }
-          >
-            <LocateFixed size={18} />
-
-            {recherchePosition
-              ? "Localisation..."
-              : "Actualiser"}
-          </button>
-        </section>
-
-        <form
-          className="report-form"
-          onSubmit={envoyerSignalement}
-        >
-          {erreur && (
-            <div className="report-error">
-              {erreur}
+              {typeSignalement==="COUPURE" && <>
+                <div className="reference-field-group">
+                  <label htmlFor="reference-zone">Quartier <span className="reference-required">*</span></label>
+                  <select id="reference-zone" value={zoneId} onChange={e=>setZoneId(e.target.value)}>
+                    <option value="">{rechercheQuartier?"Détection du quartier...":"Sélectionner un quartier"}</option>
+                    {zones.map(zone=><option value={zone.id} key={zone.id}>{zone.nom}</option>)}
+                  </select>
+                  {quartierDetecte && <p className="reference-field-note"><MapPin size={14}/> Quartier détecté : {quartierDetecte}</p>}
+                </div>
+                <div className="reference-field-group">
+                  <label htmlFor="reference-duration">Depuis quand ?</label>
+                  <select id="reference-duration" value={depuis} onChange={e=>setDepuis(e.target.value)}>
+                    <option value="0">Maintenant</option>
+                    <option value="30">Depuis environ 30 minutes</option>
+                    <option value="60">Depuis environ 1 heure</option>
+                    <option value="120">Depuis environ 2 heures</option>
+                  </select>
+                </div>
+                <div className="reference-field-group">
+                  <label htmlFor="reference-description">Description <span className="reference-optional">(optionnel)</span></label>
+                  <textarea id="reference-description" maxLength={250} value={commentaire} onChange={e=>setCommentaire(e.target.value)} placeholder="Décrivez la situation..." rows={4}/>
+                  <small className="reference-character-count">{commentaire.length}/250</small>
+                </div>
+                <button type="button" className="reference-next-button" onClick={()=>{
+                  if(!zoneId){setErreur("Veuillez sélectionner un quartier avant de continuer.");return;}
+                  setErreur("");setEtape(2);
+                }}>Suivant <Send size={17}/></button>
+              </>}
             </div>
           )}
 
-          {message && (
-            <div className="report-success">
-              ✓ {message}
+          {etape===2 && (
+            <div className="reference-report-step-panel">
+              <h2>Vérifiez votre localisation</h2>
+              <p className="reference-step-description">Le GPS permet de relier votre signalement au bon secteur.</p>
+              <div className="gps-card">
+                <div className="gps-icon"><MapPin size={21}/></div>
+                <div className="gps-info">
+                  <strong>Votre position</strong>
+                  {position ? <span className="gps-ok">Position détectée · {position.latitude.toFixed(5)}, {position.longitude.toFixed(5)}</span>
+                    : <span>{recherchePosition ? "Recherche de la position..." : "Position non détectée"}</span>}
+                  {position?.accuracy && <small>Précision approximative : {Math.round(position.accuracy)} m</small>}
+                  {rechercheQuartier && <small>Identification du quartier...</small>}
+                </div>
+                <button type="button" className="refresh-location" disabled={recherchePosition||rechercheQuartier} onClick={()=>detecterPosition()}>
+                  <LocateFixed size={17}/>{recherchePosition?"Localisation...":"Actualiser"}
+                </button>
+              </div>
+              <div className="reference-location-preview"><MiniMap position={position} height={300}/></div>
+              {!position && <p className="reference-field-note">Autorisez la localisation dans votre navigateur pour continuer.</p>}
+              <div className="reference-form-actions">
+                <button type="button" className="reference-back-button" onClick={()=>setEtape(1)}>Retour</button>
+                <button type="button" className="reference-next-button" disabled={!position||rechercheQuartier} onClick={()=>{setErreur("");setEtape(3);}}>Suivant <Send size={16}/></button>
+              </div>
             </div>
           )}
 
-          <label>
-            <Map size={20} />
-            Zone
-          </label>
-
-          <select
-            value={zoneId}
-            onChange={(e) =>
-              setZoneId(e.target.value)
-            }
-          >
-            <option value="">
-              {rechercheQuartier
-                ? "Détection automatique..."
-                : "Sélectionnez une zone"}
-            </option>
-
-            {zones.map((zone) => (
-              <option
-                key={zone.id}
-                value={zone.id}
-              >
-                {zone.nom}
-              </option>
-            ))}
-          </select>
-
-          {quartierDetecte && (
-            <small
-              style={{
-                display: "block",
-                marginTop: "6px",
-              }}
-            >
-              📍 Quartier détecté automatiquement :{" "}
-              <strong>{quartierDetecte}</strong>
-            </small>
-          )}
-
-          <label>
-            <Clock3 size={20} />
-            Depuis quand ?
-          </label>
-
-          <select
-            value={depuis}
-            onChange={(e) =>
-              setDepuis(e.target.value)
-            }
-          >
-            <option value="0">
-              Maintenant
-            </option>
-
-            <option value="30">
-              Il y a environ 30 minutes
-            </option>
-
-            <option value="60">
-              Il y a environ 1 heure
-            </option>
-
-            <option value="120">
-              Il y a environ 2 heures
-            </option>
-          </select>
-
-          <label>
-            <MessageSquare size={20} />
-            Commentaire
-            <span> (facultatif)</span>
-          </label>
-
-          <div className="comment-box">
-            <textarea
-              maxLength={250}
-              value={commentaire}
-              onChange={(e) =>
-                setCommentaire(e.target.value)
-              }
-              placeholder="Ajoutez un détail sur la coupure..."
-            />
-
-            <small>
-              {commentaire.length}/250
-            </small>
-          </div>
-
-          <section className="position-preview">
-            <h3>
-              <Map size={20} />
-              Aperçu de votre position
-            </h3>
-
-            <div className="signal-map-preview">
-              <MiniMap
-                position={position}
-                height={180}
-              />
+          {etape===3 && (
+            <div className="reference-report-step-panel">
+              <h2>Confirmer votre signalement</h2>
+              <p className="reference-step-description">Vérifiez les informations avant l'envoi.</p>
+              <div className="reference-report-summary">
+                <div><span>Type</span><strong>Coupure d'eau</strong></div>
+                <div><span>Quartier</span><strong>{zones.find(z=>String(z.id)===String(zoneId))?.nom||"Non renseigné"}</strong></div>
+                <div><span>Début estimé</span><strong>{depuis==="0"?"Maintenant":`Il y a ${depuis} minutes`}</strong></div>
+                <div><span>Localisation</span><strong>{position?"GPS détecté":"Non disponible"}</strong></div>
+                {commentaire&&<div><span>Description</span><strong>{commentaire}</strong></div>}
+              </div>
+              <p className="reference-report-consent">Les informations transmises seront utilisées pour suivre les incidents de votre quartier.</p>
+              <div className="reference-form-actions">
+                <button type="button" className="reference-back-button" onClick={()=>setEtape(2)}>Retour</button>
+                <button type="submit" className="reference-next-button" disabled={chargement||!position||!zoneId||rechercheQuartier}>
+                  {chargement?"Envoi...":"Envoyer le signalement"} <Send size={17}/>
+                </button>
+              </div>
             </div>
-          </section>
-
-          <button
-            type="submit"
-            className="submit-report"
-            disabled={
-              chargement ||
-              !position ||
-              rechercheQuartier
-            }
-          >
-            <Send size={21} />
-
-            {chargement
-              ? "Envoi..."
-              : "Signaler la coupure"}
-          </button>
-
-          <div className="report-note">
-            Votre position GPS est utilisée pour
-            détecter automatiquement votre quartier
-            et rattacher votre signalement à un
-            incident proche.
-          </div>
+          )}
         </form>
-
-        <nav className="bottom-nav">
-          <button
-            onClick={() => navigate("/accueil")}
-          >
-            <Home />
-            <span>Accueil</span>
-          </button>
-
-          <button
-            onClick={() => navigate("/carte")}
-          >
-            <Map />
-            <span>Carte</span>
-          </button>
-
-          <button className="central-button active">
-            <Plus />
-            <span>Signaler</span>
-          </button>
-
-          <button
-            onClick={() =>
-              navigate("/historique")
-            }
-          >
-            <Clock3 />
-            <span>Historique</span>
-          </button>
-
-          <button
-            onClick={() => navigate("/profil")}
-          >
-            <User />
-            <span>Profil</span>
-          </button>
-        </nav>
       </section>
     </main>
   );
