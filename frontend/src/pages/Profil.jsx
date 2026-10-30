@@ -22,6 +22,7 @@ function Profil() {
 
   const [profil, setProfil] = useState(null);
   const [chargement, setChargement] = useState(true);
+  const [erreurChargement, setErreurChargement] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -47,8 +48,11 @@ function Profil() {
         console.error(error);
 
         if (error.response?.status === 401) {
-          localStorage.clear();
-          navigate("/");
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          navigate("/connexion");
+        } else {
+          setErreurChargement("Impossible de charger votre profil. Vérifiez le serveur Django.");
         }
       })
       .finally(() => {
@@ -77,7 +81,7 @@ function Profil() {
     return (
       <main className="app-page">
         <div className="loading-page">
-          Profil introuvable.
+          {erreurChargement || "Profil indisponible."}
         </div>
       </main>
     );

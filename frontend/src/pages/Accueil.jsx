@@ -25,6 +25,7 @@ function Accueil() {
   const [profil, setProfil] = useState(null);
   const [incidents, setIncidents] = useState([]);
   const [chargement, setChargement] = useState(true);
+  const [erreurChargement, setErreurChargement] = useState("");
 
   useEffect(() => {
     const chargerDonnees = async () => {
@@ -61,7 +62,11 @@ function Accueil() {
         if (error.response?.status === 401) {
           localStorage.removeItem("access_token");
           localStorage.removeItem("refresh_token");
-          navigate("/");
+          navigate("/connexion");
+        } else {
+          setErreurChargement(
+            "Impossible de charger les données. Vérifiez le serveur Django puis réessayez."
+          );
         }
       } finally {
         setChargement(false);
@@ -90,6 +95,19 @@ function Accueil() {
         <div className="loading-page">
           Chargement...
         </div>
+      </main>
+    );
+  }
+
+  if (erreurChargement) {
+    return (
+      <main className="app-page">
+        <section className="mobile-app" role="alert">
+          <div className="report-error">{erreurChargement}</div>
+          <button type="button" className="report-main-button" onClick={() => window.location.reload()}>
+            Réessayer
+          </button>
+        </section>
       </main>
     );
   }
