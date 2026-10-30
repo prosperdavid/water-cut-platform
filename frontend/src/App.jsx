@@ -20,6 +20,7 @@ import Administration from "./pages/Administration";
 import "./App.css";
 import "./premium.css";
 import "./reference.css";
+import "./reference-pages.css";
 
 function App() {
   return (
