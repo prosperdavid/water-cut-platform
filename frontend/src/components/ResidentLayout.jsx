@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Search, Bell, MapPin, Settings2, LayoutDashboard, Map, Plus, Clock3, UserRound, Info, Settings2, ChevronDown, X, ArrowRight } from "lucide-react";
+import { Search, Bell, MapPin, LayoutDashboard, Map, Plus, Clock3, UserRound, Info, Settings2, ChevronDown, X, ArrowRight } from "lucide-react";
 import CoupureIcon from "./CoupureIcon";
 import { API_BASE_URL } from "../services/apiConfig";
 
