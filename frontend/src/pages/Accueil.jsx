@@ -115,7 +115,7 @@ function Accueil() {
             </div>
 
             <div>
-              <h2>Suivi Coupure Eau</h2>
+              <h2>Coupure</h2>
               <p>Toliara</p>
             </div>
           </div>
@@ -150,7 +150,7 @@ function Accueil() {
           <span className="status-badge">
             {incidentsEnCours.length > 0
               ? "Signalements en cours"
-              : "Aucune coupure en cours déclarée"}
+              : "Aucun signalement actif"}
           </span>
         </section>
 

@@ -75,7 +75,7 @@ function Login() {
           </div>
 
           <div>
-            <h2>Suivi Coupure Eau</h2>
+            <h2>Coupure</h2>
             <p>Toliara</p>
           </div>
         </div>

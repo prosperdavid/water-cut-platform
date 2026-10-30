@@ -126,3 +126,10 @@
 @media (prefers-reduced-motion:reduce){
  .resident-shell *{scroll-behavior:auto;transition:none!important;}
 }
+
+/* Le bandeau de marque est conserve sur mobile et integre a la barre laterale sur ordinateur. */
+@media (min-width:1025px) {
+ .resident-shell .home-dashboard .app-header .brand {display:none;}
+ .resident-shell .home-dashboard .app-header .welcome h1 {font-size:clamp(30px,3.2vw,42px);}
+ .resident-shell .home-dashboard .app-header {margin-bottom:0;}
+}
