@@ -1,5 +1,4 @@
-import { Navigate } from "react-router-dom";
-import ResidentLayout from "./ResidentLayout";
+import { Navigate, Outlet } from "react-router-dom";
 
 function ProtectedRoute() {
   const token = localStorage.getItem("access_token");
@@ -8,7 +7,7 @@ function ProtectedRoute() {
     return <Navigate to="/" replace />;
   }
 
-  return <ResidentLayout />;
+  return <Outlet />;
 }
 
 export default ProtectedRoute;
