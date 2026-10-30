@@ -60,6 +60,7 @@ class ProfilUtilisateurSerializer(serializers.ModelSerializer):
         source="utilisateur.email",
         read_only=True
     )
+    is_staff = serializers.BooleanField(source="utilisateur.is_staff", read_only=True)
 
     class Meta:
         model = ProfilUtilisateur
@@ -68,6 +69,7 @@ class ProfilUtilisateurSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "email",
+            "is_staff",
             "telephone",
             "score_fiabilite",
             "nombre_participations",
