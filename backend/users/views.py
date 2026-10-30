@@ -5,6 +5,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from incidents.models import Incident
 
+from .models import ProfilUtilisateur
+
 from .serializers import (
     InscriptionSerializer,
     ProfilUtilisateurSerializer,
@@ -22,7 +24,12 @@ class ProfilUtilisateurAPIView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        return self.request.user.profil
+        # Les comptes Django créés via createsuperuser peuvent ne pas avoir
+        # de profil Coupure : le créer à la première consultation de l'API.
+        profil, _ = ProfilUtilisateur.objects.get_or_create(
+            utilisateur=self.request.user
+        )
+        return profil
 
 
 class HistoriqueUtilisateurAPIView(generics.ListAPIView):
