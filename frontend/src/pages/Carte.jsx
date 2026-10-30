@@ -316,11 +316,11 @@ function Carte() {
   const incidentsFiltres = incidents.filter((incident) => {
     const matchesStatus = filtre === "TOUS" || incident.statut === filtre;
     const matchesSearch = !recherche.trim() || (incident.zone_nom || "")
-      .normalize("NFD").replace(/[\\u0300-\\u036f]/g, "")
+      .normalize("NFD").replace(/\p{Diacritic}/gu, "")
       .toLowerCase().includes(
-        recherche.trim().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase()
+        recherche.trim().normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase()
       );
-    return matchesStatus && matchesSearch &&
+    return matchesStatus && matchesSearch && incident.statut !== "REJETE" &&
       Number.isFinite(Number(incident.latitude)) &&
       Number.isFinite(Number(incident.longitude));
   });
