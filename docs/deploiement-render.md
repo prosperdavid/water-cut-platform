@@ -1,12 +1,12 @@
 # Déploiement sur Render
 
-Le fichier `render.yaml` décrit trois ressources dans la région de Singapour : le site React, l'API Django et PostgreSQL. Le site est statique ; la base n'accepte que les connexions privées depuis Render.
+Le fichier `render.yaml` décrit le site React existant `water-cut-frontend`, l'API Django et PostgreSQL dans la région de Singapour. Le site est statique ; la base n'accepte que les connexions privées depuis Render. Render applique la configuration au service déjà présent en faisant correspondre son nom, afin de conserver l'adresse `water-cut-frontend.onrender.com`.
 
 ## Déploiement
 
 1. Pousser la branche `feature/espace-administration` sur GitHub avec `render.yaml`.
-2. Dans Render, choisir **New → Blueprint**, connecter le dépôt `prosperdavid/water-cut-platform`, puis appliquer le Blueprint.
-3. Render construit le site et l'API, génère la clé Django, crée PostgreSQL et applique les migrations avant le démarrage.
+2. Dans Render, choisir **New → Blueprint**, connecter le dépôt `prosperdavid/water-cut-platform`, puis vérifier que le Blueprint met à jour `water-cut-frontend` et crée uniquement l'API et PostgreSQL.
+3. Après validation, Render met à jour le site existant, construit l'API, génère la clé Django, crée PostgreSQL et applique les migrations avant le démarrage.
 4. À la fin, noter l'URL publique du site. L'ajouter aux **Authorized JavaScript origins** du client OAuth Google pour activer la connexion Google en production.
 5. Créer le premier compte administrateur dans le Shell du service API avec `python manage.py createsuperuser`, puis renseigner les quartiers dans l'administration.
 

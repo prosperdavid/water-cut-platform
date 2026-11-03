@@ -35,12 +35,12 @@ services:
       - key: CORS_ALLOWED_ORIGINS
         fromService:
           type: web
-          name: coupure-toliara-prosperdavid-web
+          name: water-cut-frontend
           envVarKey: RENDER_EXTERNAL_URL
       - key: CSRF_TRUSTED_ORIGINS
         fromService:
           type: web
-          name: coupure-toliara-prosperdavid-web
+          name: water-cut-frontend
           envVarKey: RENDER_EXTERNAL_URL
       - key: DATABASE_URL
         fromDatabase:
@@ -50,7 +50,7 @@ services:
         value: 233520461332-2gumteneibvedrhcqojgguol09e4n444.apps.googleusercontent.com
 
   - type: web
-    name: coupure-toliara-prosperdavid-web
+    name: water-cut-frontend
     runtime: static
     rootDir: frontend
     branch: feature/espace-administration
