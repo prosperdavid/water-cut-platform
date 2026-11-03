@@ -200,10 +200,19 @@ Les fichiers sensibles tels que `.env`, `venv`, `node_modules` et `dist` ne sont
 ```text
 POST /api/auth/register/
 POST /api/auth/login/
+POST /api/auth/google/
 POST /api/auth/token/refresh/
 GET  /api/auth/me/
 GET  /api/auth/history/
 ```
+
+### Connexion Google
+
+La configuration du bouton et de la vérification serveur est décrite dans [docs/connexion-google.md](docs/connexion-google.md).
+
+### Déploiement
+
+La configuration Render (site, API et PostgreSQL) est décrite dans [docs/deploiement-render.md](docs/deploiement-render.md).
 
 ### Zones
 

@@ -20,12 +20,16 @@ class SignalementCreateSerializer(serializers.Serializer):
 
     latitude = serializers.DecimalField(
         max_digits=9,
-        decimal_places=6
+        decimal_places=6,
+        min_value=-90,
+        max_value=90
     )
 
     longitude = serializers.DecimalField(
         max_digits=9,
-        decimal_places=6
+        decimal_places=6,
+        min_value=-180,
+        max_value=180
     )
 
     heure_debut_estimee = serializers.DateTimeField(
@@ -60,6 +64,22 @@ class SignalementCreateSerializer(serializers.Serializer):
 
 
 class ConfirmationSerializer(serializers.ModelSerializer):
+    latitude = serializers.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        min_value=-90,
+        max_value=90,
+        required=False,
+        allow_null=True,
+    )
+    longitude = serializers.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        min_value=-180,
+        max_value=180,
+        required=False,
+        allow_null=True,
+    )
     class Meta:
         model = Confirmation
         fields = [

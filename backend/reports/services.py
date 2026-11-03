@@ -68,6 +68,10 @@ def creer_signalement(
         update_fields=["nombre_participations"]
     )
 
+    # Les signalements sont des avis positifs : leur ajout doit aussi
+    # recalculer la confiance et le statut de l'incident.
+    mettre_a_jour_confiance_incident(incident)
+
     return signalement, incident, nouvel_incident
 
 def calculer_score_confiance(incident):

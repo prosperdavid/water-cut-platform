@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import toliaraMer from "../assets/toliara-mer.png";
 import CoupureIcon from "../components/CoupureIcon";
 import toliaraVille from "../assets/toliara-ville.png";
+import toliaraMapPreview from "../assets/toliara-map-preview.png";
 
 import {
   Droplets,
@@ -114,19 +115,17 @@ function Vitrine() {
         <strong>Toliara</strong>
       </div>
 
-      <div className="map-live-badge">Aperçu illustratif</div>
+      <div className="map-live-badge">Aperçu · données de démonstration</div>
     </div>
 
     <div className="landing-map-body">
       <div className="landing-map-visual">
-        <div className="map-road road-1"></div>
-        <div className="map-road road-2"></div>
-        <div className="map-road road-3"></div>
-
-        <div className="map-zone-label zone-1">Centre-ville</div>
-        <div className="map-zone-label zone-2">Tanambao</div>
-        <div className="map-zone-label zone-3">Anketa</div>
-
+        <img
+          className="landing-map-photo"
+          src={toliaraMapPreview}
+          alt="Vue satellite de Tanambao à Toliara, avec les rues et bâtiments du quartier"
+        />
+        <span className="landing-map-photo-label"><MapPin size={13} aria-hidden="true"/> Vue satellite</span>
         <div className="map-marker marker-red">
           <span></span>
         </div>
@@ -137,16 +136,6 @@ function Vitrine() {
 
         <div className="map-marker marker-green">
           <span></span>
-        </div>
-
-        <div className="map-mini-card mini-card-1">
-          <strong>Coupure confirmée</strong>
-          <small>Tanambao • 15 min</small>
-        </div>
-
-        <div className="map-mini-card mini-card-2">
-          <strong>Rétablissement probable</strong>
-          <small>Centre-ville • 40 min</small>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Droplet, Clock3, CircleCheck, UsersRound, Plus, ArrowRight, MapPin, TrendingUp, AlertCircle, Search, ArrowUpRight } from "lucide-react";
+import { Droplet, Clock3, CircleCheck, UsersRound, Plus, ArrowRight, MapPin, AlertCircle, Search } from "lucide-react";
 import MiniMap from "../components/MiniMap";
 import { API_BASE_URL } from "../services/apiConfig";
 
@@ -63,13 +63,14 @@ function SignalChart({incidents}) {
     };
   });
   const maximum=Math.max(1,...days.map(d=>d.active+d.pending+d.restored));
+  const hasActivity=days.some(d=>d.active+d.pending+d.restored>0);
   return (
-    <div className="reference-chart" role="img" aria-label="Répartition des incidents enregistrés chaque jour sur les sept derniers jours">
+    <div className={`reference-chart${hasActivity ? "" : " is-empty"}`} role="img" aria-label="Répartition des incidents enregistrés chaque jour sur les sept derniers jours">
       <div className="reference-chart-grid" aria-hidden="true"><span/><span/><span/><span/></div>
       <div className="reference-chart-bars">
         {days.map(d=>(
           <div className="reference-chart-day" key={d.key} title={`${d.label} : ${d.active} confirmé(s), ${d.pending} à confirmer, ${d.restored} rétabli(s)`}>
-            <div className="reference-chart-bar" style={{height:`${100*(d.active+d.pending+d.restored)/maximum}%`}}>
+            <div className={`reference-chart-bar${d.active+d.pending+d.restored===0 ? " is-zero" : ""}`} style={{height:`${100*(d.active+d.pending+d.restored)/maximum}%`}}>
               {d.restored>0&&<span className="reference-bar-green" style={{flex:d.restored}}/>}
               {d.pending>0&&<span className="reference-bar-orange" style={{flex:d.pending}}/>}
               {d.active>0&&<span className="reference-bar-red" style={{flex:d.active}}/>}
@@ -78,6 +79,7 @@ function SignalChart({incidents}) {
           </div>
         ))}
       </div>
+      {!hasActivity&&<div className="reference-chart-empty-note">Aucun signalement cette semaine</div>}
     </div>
   );
 }
@@ -130,20 +132,23 @@ export default function Accueil() {
 
   return (
     <div className="reference-dashboard">
-      <div className="reference-dashboard-heading">
-        <div>
-          <div className="reference-overline">SUIVI CITOYEN · TOLIARA</div>
-          <h1>L'eau, quartier<br className="reference-desktop-break"/> par quartier.</h1>
-          <p>Informez, consultez, agissons ensemble.</p>
+      <section className="reference-dashboard-hero">
+        <div className="reference-hero-copy">
+          <div className="reference-overline">SUIVI CITOYEN <span aria-hidden="true">·</span> TOLIARA</div>
+          <h1>L’eau, quartier<br className="reference-desktop-break"/> par quartier.</h1>
+          <p>Suivez les coupures et les retours d’eau signalés près de chez vous.</p>
         </div>
-        <button className="reference-primary reference-dashboard-cta" onClick={()=>navigate("/signaler")}><Plus size={22}/>Signaler une coupure</button>
-      </div>
+        <div className="reference-hero-actions">
+          <button className="reference-primary reference-dashboard-cta" onClick={()=>navigate("/signaler")}><Plus size={20}/>Signaler une coupure</button>
+          <button type="button" className="reference-dashboard-map-link" onClick={()=>navigate("/carte")}>Explorer la carte <ArrowRight size={16}/></button>
+        </div>
+      </section>
 
       <div className="reference-kpi-grid">
-        <Metric Icon={Droplet} value={stats.active} label="Coupures confirmées" tone="danger" hint="Situation actuelle"/>
-        <Metric Icon={Clock3} value={stats.pending} label="À confirmer" tone="warning" hint="Vérification en cours"/>
-        <Metric Icon={CircleCheck} value={stats.restored} label="Eau rétablie" tone="success" hint="Incidents rétablis"/>
-        <Metric Icon={UsersRound} value={stats.reports} label="Signalements citoyens" tone="info" hint="Total enregistré"/>
+        <Metric Icon={Droplet} value={stats.active} label="Coupures confirmées" tone="danger" hint="Incidents en cours"/>
+        <Metric Icon={Clock3} value={stats.pending} label="À confirmer" tone="warning" hint="En cours de vérification"/>
+        <Metric Icon={CircleCheck} value={stats.restored} label="Eau rétablie" tone="success" hint="Retours confirmés"/>
+        <Metric Icon={UsersRound} value={stats.reports} label="Signalements citoyens" tone="info" hint="Déclarations reçues"/>
       </div>
 
       <div className="reference-primary-grid">

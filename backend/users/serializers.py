@@ -43,6 +43,13 @@ class InscriptionSerializer(serializers.ModelSerializer):
         return user
 
 
+class GoogleCredentialSerializer(serializers.Serializer):
+    credential = serializers.CharField(
+        write_only=True,
+        max_length=8192,
+    )
+
+
 class ProfilUtilisateurSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         source="utilisateur.username",

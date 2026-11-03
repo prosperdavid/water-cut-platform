@@ -6,6 +6,7 @@ from rest_framework_simplejwt.views import (
 
 from .views import (
     InscriptionAPIView,
+    GoogleLoginAPIView,
     ProfilUtilisateurAPIView,
     HistoriqueUtilisateurAPIView,
 )
@@ -22,6 +23,12 @@ urlpatterns = [
         "login/",
         TokenObtainPairView.as_view(),
         name="login"
+    ),
+
+    path(
+        "google/",
+        GoogleLoginAPIView.as_view(),
+        name="google-login"
     ),
 
     path(

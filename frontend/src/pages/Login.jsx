@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toliaraMer from "../assets/toliara-mer.png";
 import { API_BASE_URL } from "../services/apiConfig";
@@ -17,6 +17,38 @@ import axios from "axios";
 import CoupureIcon from "../components/CoupureIcon";
 import "../App.css";
 
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+let googleInitializedClientId = "";
+let googleCredentialHandler = null;
+
+function handleGoogleCredential(response) {
+  if (response?.credential && googleCredentialHandler) {
+    void googleCredentialHandler(response.credential);
+  }
+}
+
+function loadGoogleIdentityScript() {
+  if (window.google?.accounts?.id) return Promise.resolve();
+
+  if (!window.googleIdentityPromise) {
+    window.googleIdentityPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.id = "google-identity-services";
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    }).catch((error) => {
+      window.googleIdentityPromise = null;
+      throw error;
+    });
+  }
+
+  return window.googleIdentityPromise;
+}
+
 function Login() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
@@ -24,6 +56,89 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erreur, setErreur] = useState("");
+  const googleButtonRef = useRef(null);
+
+  const ouvrirSession = useCallback(async (tokens) => {
+    localStorage.setItem("access_token", tokens.access);
+    localStorage.setItem("refresh_token", tokens.refresh);
+
+    let destination = "/accueil";
+    try {
+      await axios.get(`${API_BASE_URL}/api/administration/me/`, {
+        headers: { Authorization: `Bearer ${tokens.access}` },
+      });
+      destination = "/administration";
+    } catch {
+      // Les habitants continuent vers l'accueil.
+    }
+    navigate(destination);
+  }, [navigate]);
+
+  const connecterAvecGoogle = useCallback(async (credential) => {
+    setErreur("");
+    setLoading(true);
+    try {
+      const { data } = await axios.post(`${API_BASE_URL}/api/auth/google/`, {
+        credential,
+      });
+      await ouvrirSession(data);
+    } catch (error) {
+      setErreur(
+        error.response?.data?.detail ||
+        "La connexion avec Google a échoué. Réessayez."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [ouvrirSession]);
+
+  useEffect(() => {
+    const button = googleButtonRef.current;
+    if (!GOOGLE_CLIENT_ID || !button) return undefined;
+
+    let cancelled = false;
+    googleCredentialHandler = connecterAvecGoogle;
+
+    loadGoogleIdentityScript()
+      .then(() => {
+        if (cancelled || !googleButtonRef.current) return;
+
+        if (googleInitializedClientId !== GOOGLE_CLIENT_ID) {
+          window.google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: handleGoogleCredential,
+            ux_mode: "popup",
+            auto_select: false,
+          });
+          googleInitializedClientId = GOOGLE_CLIENT_ID;
+        }
+
+        const width = Math.min(400, Math.max(220, button.clientWidth));
+        window.google.accounts.id.renderButton(button, {
+          type: "standard",
+          theme: "outline",
+          size: "large",
+          text: "continue_with",
+          shape: "rectangular",
+          logo_alignment: "left",
+          width,
+          locale: "fr",
+        });
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setErreur("Le service Google n’est pas joignable pour le moment.");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      if (googleCredentialHandler === connecterAvecGoogle) {
+        googleCredentialHandler = null;
+      }
+      button.replaceChildren();
+    };
+  }, [connecterAvecGoogle]);
 
   const connecter = async (e) => {
     e.preventDefault();
@@ -40,26 +155,7 @@ function Login() {
         }
       );
 
-      localStorage.setItem(
-        "access_token",
-        response.data.access
-      );
-
-      localStorage.setItem(
-        "refresh_token",
-        response.data.refresh
-      );
-
-      let destination = "/accueil";
-      try {
-        await axios.get(API_BASE_URL + "/api/administration/me/", {
-          headers: { Authorization: "Bearer " + response.data.access },
-        });
-        destination = "/administration";
-      } catch {
-        // Les habitants continuent vers l'accueil.
-      }
-      navigate(destination);
+      await ouvrirSession(response.data);
     } catch {
       setErreur(
         "Nom d'utilisateur ou mot de passe incorrect."
@@ -176,6 +272,18 @@ function Login() {
             <p>ou</p>
             <span></span>
           </div>
+
+          {GOOGLE_CLIENT_ID ? (
+            <div
+              ref={googleButtonRef}
+              className="google-login-slot"
+              aria-label="Continuer avec Google"
+            />
+          ) : (
+            <div className="google-login-config-note" role="status">
+              La connexion Google sera disponible après configuration.
+            </div>
+          )}
 
           <button
               type="button"

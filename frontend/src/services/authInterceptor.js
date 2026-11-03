@@ -26,6 +26,7 @@ axios.interceptors.response.use(
       demande._retry ||
       url.includes("/api/auth/login/") ||
       url.includes("/api/auth/register/") ||
+      url.includes("/api/auth/google/") ||
       url.includes("/api/auth/token/refresh/")
     ) {
       return Promise.reject(error);

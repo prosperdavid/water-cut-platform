@@ -14,6 +14,13 @@ class ProfilUtilisateur(models.Model):
         blank=True
     )
 
+    google_sub = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        unique=True,
+    )
+
     score_fiabilite = models.FloatField(
         default=50.0
     )

@@ -1,3 +1,5 @@
+from math import isfinite
+
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 
@@ -58,6 +60,20 @@ class IncidentListAPIView(ListAPIView):
                 }
             )
 
+        if not all(isfinite(value) for value in (latitude, longitude, rayon)):
+            raise ValidationError(
+                {"gps": "Coordonnées GPS ou rayon invalides."}
+            )
+
+        if not -90 <= latitude <= 90:
+            raise ValidationError(
+                {"latitude": "La latitude doit être comprise entre -90 et 90."}
+            )
+
+        if not -180 <= longitude <= 180:
+            raise ValidationError(
+                {"longitude": "La longitude doit être comprise entre -180 et 180."}
+            )
         if rayon <= 0:
             raise ValidationError(
                 {

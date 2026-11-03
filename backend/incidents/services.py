@@ -39,8 +39,9 @@ def calculer_distance_metres(lat1, lon1, lat2, lon2):
 
 def trouver_incident_proche(latitude, longitude, date_reference=None):
     """
-    Cherche l'incident actif le plus proche dans une fenêtre
-    de 2 heures et un rayon maximal de 300 mètres.
+    Cherche un incident encore ouvert (à confirmer, actif ou en
+    rétablissement probable) dans une fenêtre de 2 heures et un rayon
+    maximal de 300 mètres.
     """
 
     if date_reference is None:
@@ -55,6 +56,7 @@ def trouver_incident_proche(latitude, longitude, date_reference=None):
         statut__in=[
             Incident.Statut.A_CONFIRMER,
             Incident.Statut.ACTIF,
+            Incident.Statut.RETABLISSEMENT_PROBABLE,
         ],
         date_debut__gte=date_minimum,
         date_debut__lte=date_reference,

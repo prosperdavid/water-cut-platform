@@ -100,6 +100,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .login-form .login-submit { width: 100%; margin-top: 3px; }
 .login-form .separator { margin: 22px 0; }
 .login-form .register-button { width: 100%; min-height: 50px; }
+.google-login-slot { width: 100%; min-height: 44px; display: flex; justify-content: center; overflow: hidden; }
+.google-login-slot iframe { max-width: 100%; }
+.google-login-config-note { min-height: 44px; display: flex; align-items: center; justify-content: center; padding: 10px 14px; border: 1px dashed #d3e0e4; border-radius: 11px; color: #758995; background: #f9fbfb; font-size: 11px; text-align: center; }
 .login-form .forgot-password { margin-top: 13px; font-size: 12px; }
 .login-back-link { margin: 22px 0 0; text-align: center; }
 .login-back-link button { padding: 5px 8px; border: 0; background: transparent; color: #78909b; font-size: 11px; cursor: pointer; }
@@ -238,4 +241,116 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+/* Accueil habitant : une lecture claire de la situation et des signalements. */
+.reference-dashboard { max-width: 1600px; padding-top: 22px; padding-bottom: 38px; }
+.reference-dashboard-hero { display: flex; align-items: center; justify-content: space-between; gap: 30px; min-height: 154px; margin-bottom: 16px; padding: 8px 2px 21px; border: 0; border-bottom: 1px solid #e2e9eb; border-radius: 0; color: var(--ui-ink); background: transparent; box-shadow: none; }
+.reference-dashboard-hero::before, .reference-dashboard-hero::after { display: none; }
+.reference-hero-copy { min-width: 0; }
+.reference-dashboard .reference-overline { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 0; border: 0; color: #16808a; background: transparent; font-size: 10px; font-weight: 820; letter-spacing: 1.25px; }
+.reference-dashboard .reference-overline::before { width: 7px; height: 7px; background: #16a696; box-shadow: 0 0 0 3px rgba(22, 166, 150, .12); }
+.reference-dashboard-hero h1 { max-width: 700px; margin: 0; color: #0c2d40; font-size: clamp(35px, 3.6vw, 46px); font-weight: 830; line-height: 1.04; letter-spacing: -.055em; text-wrap: balance; }
+.reference-dashboard-hero .reference-hero-copy > p { max-width: 540px; margin: 9px 0 0; color: #708594; font-size: 14px; line-height: 1.55; }
+.reference-hero-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; margin: 0; }
+.reference-dashboard .reference-dashboard-cta { min-height: 48px; margin: 0; padding: 0 18px; border: 0; border-radius: 11px; color: #fff; background: linear-gradient(120deg, #087b88, #0b9b9e); box-shadow: 0 8px 20px rgba(8, 107, 121, .16); font-size: 12px; }
+.reference-dashboard .reference-dashboard-cta:hover { transform: translateY(-1px); background: linear-gradient(120deg, #066d7b, #078c91); box-shadow: 0 12px 23px rgba(8, 107, 121, .2); }
+.reference-dashboard-map-link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 14px; border: 1px solid #dce8ea; border-radius: 11px; color: #176b78; background: #fff; font-size: 11px; font-weight: 720; cursor: pointer; }
+.reference-dashboard-map-link:hover { border-color: #acd4d5; background: #f7fbfb; }
+.reference-dashboard .reference-kpi-grid { gap: 13px; margin-bottom: 16px; }
+.reference-dashboard .reference-metric { position: relative; min-height: 103px; gap: 14px; overflow: hidden; padding: 16px 18px; border-color: #e3eaec; border-radius: 15px; background: #fff; box-shadow: 0 5px 18px rgba(19, 53, 70, .035); }
+.reference-dashboard .reference-metric::before { position: absolute; inset: 0 auto 0 0; width: 3px; content: ""; background: #dce9eb; }
+.reference-dashboard .reference-metric:nth-child(1)::before { background: #e64e52; }
+.reference-dashboard .reference-metric:nth-child(2)::before { background: #f2a04b; }
+.reference-dashboard .reference-metric:nth-child(3)::before { background: #38a984; }
+.reference-dashboard .reference-metric:nth-child(4)::before { background: #42a2ca; }
+.reference-dashboard .reference-metric-icon { width: 43px; height: 43px; border-radius: 13px; box-shadow: none; }
+.reference-dashboard .reference-metric-copy strong { color: #0d2e41; font-size: 29px; }
+.reference-dashboard .reference-metric-copy span { color: #284457; font-size: 11px; font-weight: 690; }
+.reference-dashboard .reference-metric-copy small { margin-top: 5px; color: #8999a3; font-size: 9px; }
+.reference-dashboard .reference-primary-grid, .reference-dashboard .reference-secondary-grid { gap: 15px; margin-bottom: 15px; }
+.reference-dashboard .reference-panel { min-width: 0; padding: 19px; border-color: #e2e9eb; border-radius: 16px; background: #fff; box-shadow: 0 6px 20px rgba(19, 53, 70, .035); }
+.reference-dashboard .reference-panel-heading { min-height: 30px; gap: 12px; margin-bottom: 13px; }
+.reference-dashboard .reference-panel-heading h2 { color: #102f42; font-size: 15px; font-weight: 790; letter-spacing: -.025em; }
+.reference-dashboard .reference-panel-heading button { gap: 6px; color: #087b88; font-size: 11px; font-weight: 720; }
+.reference-dashboard .reference-home-map { height: clamp(330px, 34vw, 405px); border-color: #e1e9e9; border-radius: 12px; }
+.reference-dashboard .reference-map-legend { right: 11px; bottom: 11px; padding: 8px 10px; border: 1px solid rgba(220, 231, 235, .9); border-radius: 9px; font-size: 9px; }
+.reference-dashboard .reference-feed-panel { min-height: 0; }
+.reference-dashboard .reference-incident-row { min-height: 65px; gap: 9px; padding: 11px 3px; border-color: #edf1f2; }
+.reference-dashboard .reference-incident-row:hover { border-radius: 9px; background: #f5f9f9; }
+.reference-dashboard .reference-incident-row-heading strong { color: #102f42; font-size: 11px; }
+.reference-dashboard .reference-incident-row-details { font-size: 10px; }
+.reference-dashboard .reference-incident-row > small { color: #82939e; font-size: 9px; }
+.reference-dashboard .reference-status { padding: 4px 8px; font-size: 8px; }
+.reference-dashboard .reference-chart { height: 140px; margin-top: 12px; }
+.reference-dashboard .reference-chart-grid span { background: #edf1f2; }
+.reference-dashboard .reference-chart-bar.is-zero { height: 3px !important; max-height: none; border-radius: 99px; background: #dce7e9; }
+.reference-chart-empty-note { position: absolute; z-index: 2; top: 42%; left: 50%; padding: 7px 11px; transform: translate(-50%, -50%); border: 1px solid #e3ebec; border-radius: 999px; color: #748894; background: rgba(255, 255, 255, .95); font-size: 10px; white-space: nowrap; box-shadow: 0 4px 12px rgba(15, 47, 65, .04); }
+.reference-dashboard .reference-chart-legend { gap: 12px; color: #657e8c; font-size: 9px; }
+.reference-dashboard .reference-ranking-row { min-height: 35px; }
+.reference-dashboard .reference-ranking-row:hover { border-radius: 8px; background: #f5f9f9; }
+
+@media (max-width: 1250px) and (min-width: 1025px) {
+  .reference-dashboard .reference-metric { gap: 9px; padding-inline: 12px; }
+  .reference-dashboard .reference-metric-icon { width: 39px; height: 39px; }
+  .reference-dashboard .reference-metric-copy strong { font-size: 26px; }
+  .reference-dashboard .reference-metric-copy small { font-size: 8px; }
+}
+@media (max-width: 1024px) {
+  .reference-dashboard { padding-top: 19px; }
+  .reference-dashboard-hero { min-height: 140px; }
+  .reference-dashboard .reference-primary-grid, .reference-dashboard .reference-secondary-grid { grid-template-columns: 1fr; }
+  .reference-dashboard .reference-home-map { height: 360px; }
+}
+@media (max-width: 700px) {
+  .reference-dashboard { padding-top: 12px; }
+  .reference-dashboard-hero { align-items: stretch; flex-direction: column; gap: 15px; min-height: 0; margin-bottom: 13px; padding: 5px 0 17px; }
+  .reference-dashboard .reference-overline { margin-bottom: 8px; font-size: 9px; }
+  .reference-dashboard-hero h1 { max-width: 430px; font-size: clamp(34px, 9vw, 40px); line-height: 1.02; }
+  .reference-dashboard-hero .reference-hero-copy > p { max-width: 340px; margin-top: 8px; font-size: 12px; }
+  .reference-desktop-break { display: none; }
+  .reference-hero-actions { align-items: stretch; flex-direction: column; gap: 7px; }
+  .reference-dashboard .reference-dashboard-cta, .reference-dashboard-map-link { width: 100%; min-height: 45px; }
+  .reference-dashboard .reference-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0 0 14px; }
+  .reference-dashboard .reference-metric { min-height: 72px; display: flex; flex-direction: row; justify-content: flex-start; gap: 9px; padding: 10px 9px; border: 1px solid #e3eaec; border-radius: 12px; box-shadow: 0 4px 13px rgba(19, 53, 70, .03); text-align: left; }
+  .reference-dashboard .reference-metric::before { width: 2px; }
+  .reference-dashboard .reference-metric:nth-child(4) { display: flex; }
+  .reference-dashboard .reference-metric-icon { width: 34px; height: 34px; border-radius: 10px; }
+  .reference-dashboard .reference-metric-icon svg { width: 18px; height: 18px; }
+  .reference-dashboard .reference-metric-copy { align-items: flex-start; }
+  .reference-dashboard .reference-metric-copy strong { font-size: 21px; }
+  .reference-dashboard .reference-metric-copy span { max-width: none; font-size: 9px; line-height: 1.25; }
+  .reference-dashboard .reference-metric-copy small { display: none; }
+  .reference-dashboard .reference-primary-grid, .reference-dashboard .reference-secondary-grid { gap: 12px; margin-bottom: 12px; }
+  .reference-dashboard .reference-panel { padding: 14px; border-radius: 14px; }
+  .reference-dashboard .reference-panel-heading { gap: 7px; margin-bottom: 10px; }
+  .reference-dashboard .reference-panel-heading h2 { font-size: 13px; }
+  .reference-dashboard .reference-panel-heading button { gap: 3px; font-size: 9px; }
+  .reference-dashboard .reference-home-map { height: 275px; border-radius: 10px; }
+  .reference-dashboard .reference-map-legend { right: 6px; bottom: 7px; left: 6px; justify-content: center; gap: 7px; padding: 7px 4px; font-size: 8px; }
+  .reference-dashboard .reference-incident-row { min-height: 60px; gap: 7px; padding: 9px 1px; }
+  .reference-dashboard .reference-incident-row > small { font-size: 8px; }
+  .reference-dashboard .reference-chart { height: 135px; margin-inline: 0; }
+  .reference-dashboard .reference-chart-bars { gap: 5px; padding-inline: 3px; }
+  .reference-dashboard .reference-chart-label { font-size: 8px; }
+  .reference-chart-empty-note { top: 39%; font-size: 9px; }
+  .reference-dashboard .reference-chart-legend { gap: 8px; font-size: 8px; }
+  .reference-dashboard .reference-time-chip { padding: 5px 7px; font-size: 8px; }
+}
+@media (max-width: 375px) {
+  .reference-dashboard .reference-metric { gap: 6px; padding-inline: 7px; }
+  .reference-dashboard .reference-metric-icon { width: 30px; height: 30px; }
+  .reference-dashboard .reference-metric-copy span { font-size: 8px; }
+  .reference-dashboard .reference-map-legend { gap: 4px; font-size: 7px; }
+}
+
+/* L’aperçu de la page publique s’appuie sur une photo de Toliara. */
+.landing-map-visual { isolation: isolate; background: #dce8e8; }
+.landing-map-photo { position: absolute; z-index: 0; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 46%; }
+.landing-map-visual::after { position: absolute; z-index: 1; inset: 0; content: ""; pointer-events: none; background: linear-gradient(180deg, rgba(7, 34, 47, .05) 0%, rgba(7, 34, 47, .12) 48%, rgba(7, 34, 47, .3) 100%); }
+.landing-map-visual .map-road { display: none; }
+.landing-map-visual .map-zone-label, .landing-map-visual .map-marker, .landing-map-visual .map-mini-card { z-index: 2; }
+.landing-map-photo-label { position: absolute; z-index: 3; top: 13px; left: 13px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border: 1px solid rgba(255, 255, 255, .32); border-radius: 999px; color: #fff; background: rgba(7, 37, 53, .76); backdrop-filter: blur(10px); font-size: 10px; font-weight: 720; box-shadow: 0 5px 16px rgba(0, 20, 31, .18); }
+@media (max-width: 700px) {
+  .landing-map-photo-label { top: 9px; left: 9px; padding: 6px 8px; font-size: 9px; }
 }
