@@ -104,6 +104,47 @@ function ControleCarte({
   return null;
 }
 
+function RedimensionnerCarte() {
+  const map = useMap();
+
+  useEffect(() => {
+    const container = map.getContainer();
+    let frameId = 0;
+
+    const invaliderTaille = () => {
+      if (frameId) window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(() => {
+        frameId = 0;
+        if (container.isConnected) {
+          map.invalidateSize({ pan: false, animate: false });
+        }
+      });
+    };
+
+    const observer = typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(invaliderTaille)
+      : null;
+
+    observer?.observe(container);
+    if (container.parentElement) observer?.observe(container.parentElement);
+    window.addEventListener("resize", invaliderTaille, { passive: true });
+    document.addEventListener("visibilitychange", invaliderTaille);
+    invaliderTaille();
+
+    const timerId = window.setTimeout(invaliderTaille, 180);
+
+    return () => {
+      if (frameId) window.cancelAnimationFrame(frameId);
+      window.clearTimeout(timerId);
+      observer?.disconnect();
+      window.removeEventListener("resize", invaliderTaille);
+      document.removeEventListener("visibilitychange", invaliderTaille);
+    };
+  }, [map]);
+
+  return null;
+}
+
 
 function Carte() {
   const navigate = useNavigate();
@@ -464,6 +505,7 @@ function Carte() {
           <MapContainer
             center={POSITION_TOLIARA}
             zoom={14}
+            className="incident-leaflet-map"
             style={{
               width: "100%",
               height: "100%",
@@ -474,6 +516,7 @@ function Carte() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
+            <RedimensionnerCarte />
 
             <ControleCarte
               destination={

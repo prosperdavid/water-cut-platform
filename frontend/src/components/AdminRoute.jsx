@@ -13,10 +13,10 @@ export default function AdminRoute() {
       setEtat("connexion");
       return () => { actif = false; };
     }
-    axios.get(API_BASE_URL + "/api/administration/me/", {
+    axios.get(API_BASE_URL + "/api/auth/me/", {
       headers: { Authorization: "Bearer " + token },
-    }).then(() => {
-      if (actif) setEtat("autorise");
+    }).then(({ data }) => {
+      if (actif) setEtat(data.is_staff ? "autorise" : "interdit");
     }).catch((erreur) => {
       if (!actif) return;
       if (erreur.response?.status === 401) {

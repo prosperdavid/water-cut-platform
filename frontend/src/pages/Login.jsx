@@ -66,10 +66,10 @@ function Login() {
 
     let destination = "/accueil";
     try {
-      await axios.get(`${API_BASE_URL}/api/administration/me/`, {
+      const { data: profil } = await axios.get(`${API_BASE_URL}/api/auth/me/`, {
         headers: { Authorization: `Bearer ${tokens.access}` },
       });
-      destination = "/administration";
+      if (profil.is_staff) destination = "/administration";
     } catch {
       // Les habitants continuent vers l'accueil.
     }
