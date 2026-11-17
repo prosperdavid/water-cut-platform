@@ -31,7 +31,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .landing-hero::before { background: linear-gradient(100deg, rgba(4, 28, 44, .72), rgba(5, 45, 62, .38) 62%, rgba(4, 32, 49, .28)); }
 .landing-hero h1 { text-wrap: balance; text-shadow: 0 2px 28px rgba(0, 20, 33, .22); }
 .landing-hero h1 span { color: #93e7e0; }
-.hero-badge { border-radius: 999px; }
 .hero-primary { background: linear-gradient(120deg, #087f8d, #12a8a4); box-shadow: 0 12px 26px rgba(0, 31, 47, .2); }
 .hero-primary:hover { box-shadow: 0 16px 34px rgba(0, 31, 47, .27); }
 .hero-secondary { border-radius: 12px; }
@@ -61,6 +60,22 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .input-group { min-height: 54px; border-radius: 12px; background: #fbfdfd; border-color: #d9e5e8; }
 .input-group:focus-within { border-color: var(--ui-primary); box-shadow: 0 0 0 4px rgba(8, 127, 141, .1); }
 .input-group > svg { color: #7b929e; }
+.login-card .input-group { box-sizing: border-box; height: 58px; min-height: 58px; }
+.login-card .input-group input,
+.login-card .input-group input:focus,
+.login-card .input-group input:focus-visible {
+  box-sizing: border-box;
+  width: 0;
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+}
 .login-button, .submit-report, .report-main-button { min-height: 52px; border-radius: 12px; background: linear-gradient(120deg, #087c8b, #0d9e9e); box-shadow: 0 10px 22px rgba(8, 127, 141, .18); }
 .login-button:hover, .submit-report:not(:disabled):hover, .report-main-button:hover { transform: translateY(-1px); box-shadow: 0 14px 28px rgba(8, 127, 141, .24); }
 .register-button { border-radius: 12px; border-color: #bfdddd; }

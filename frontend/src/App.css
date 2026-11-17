@@ -2020,19 +2020,6 @@ body {
     #f8fbff;
 }
 
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 14px;
-  border-radius: 100px;
-  background: #e9f5ff;
-  color: #0875da;
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 24px;
-}
-
 .landing-hero h1 {
   max-width: 850px;
   margin: 0 auto;
@@ -2653,11 +2640,6 @@ body {
   background-repeat: no-repeat !important;
 }
 
-.landing-hero .hero-badge {
-  background: rgba(255, 255, 255, 0.92);
-  color: #0879df;
-}
-
 .landing-hero h1 {
   color: #ffffff;
   text-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
@@ -2958,12 +2940,6 @@ body {
 
 .map-title-icon {
   font-size: 20px;
-}
-
-.map-live-badge {
-  color: #0f9d58;
-  font-weight: 700;
-  font-size: 15px;
 }
 
 .landing-map-body {

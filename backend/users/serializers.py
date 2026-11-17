@@ -1,5 +1,8 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import ProfilUtilisateur
 from incidents.models import Incident
@@ -28,6 +31,11 @@ class InscriptionSerializer(serializers.ModelSerializer):
             "password",
         ]
 
+    def validate_email(self, value):
+        if value and User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("Cette adresse e-mail est déjà utilisée.")
+        return value
+
     def create(self, validated_data):
         telephone = validated_data.pop("telephone", "")
 
@@ -41,6 +49,31 @@ class InscriptionSerializer(serializers.ModelSerializer):
         )
 
         return user
+
+
+class EmailOrUsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """Autorise la connexion avec l’identifiant habituel ou l’adresse e-mail."""
+
+    def validate(self, attrs):
+        user_model = get_user_model()
+        identifier_field = user_model.USERNAME_FIELD
+        identifier = attrs.get(identifier_field)
+
+        if isinstance(identifier, str) and "@" in identifier:
+            username_exists = user_model.objects.filter(
+                **{identifier_field: identifier}
+            ).exists()
+            if not username_exists:
+                matches = list(
+                    user_model.objects.filter(email__iexact=identifier)
+                    .values_list(identifier_field, flat=True)[:2]
+                )
+                if len(matches) == 1:
+                    attrs[identifier_field] = matches[0]
+                elif len(matches) > 1:
+                    raise AuthenticationFailed("Identifiant ou mot de passe incorrect.")
+
+        return super().validate(attrs)
 
 
 class GoogleCredentialSerializer(serializers.Serializer):

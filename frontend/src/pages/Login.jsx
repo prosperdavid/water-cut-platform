@@ -160,7 +160,7 @@ function Login() {
       await ouvrirSession(response.data);
     } catch {
       setErreur(
-        "Nom d'utilisateur ou mot de passe incorrect."
+        "E-mail, nom d’utilisateur ou mot de passe incorrect."
       );
     } finally {
       setLoading(false);
@@ -200,7 +200,7 @@ function Login() {
             </div>
           )}
 
-          <label htmlFor="login-username">Nom d’utilisateur</label>
+          <label htmlFor="login-username">E-mail ou nom d’utilisateur</label>
 
           <div className="input-group">
             <User size={19} aria-hidden="true" />
@@ -209,7 +209,7 @@ function Login() {
               id="login-username"
               type="text"
               autoComplete="username"
-              placeholder="Votre nom d’utilisateur"
+              placeholder="Votre e-mail ou nom d’utilisateur"
               value={username}
               onChange={(e) =>
                 setUsername(e.target.value)
@@ -233,28 +233,23 @@ function Login() {
               autoComplete="current-password"
               placeholder="Votre mot de passe"
               value={password}
-              onChange={(e) =>
-                setPassword(e.target.value)
-              }
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (!e.target.value) setShowPassword(false);
+              }}
               required
             />
 
-            <button
-              type="button"
-              className="eye-button"
-              aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-              onClick={() =>
-                setShowPassword(
-                  !showPassword
-                )
-              }
-            >
-              {showPassword ? (
-                <EyeOff size={21} />
-              ) : (
-                <Eye size={21} />
-              )}
-            </button>
+            {password.length > 0 && (
+              <button
+                type="button"
+                className="eye-button"
+                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={21} /> : <Eye size={21} />}
+              </button>
+            )}
           </div>
 
           <button

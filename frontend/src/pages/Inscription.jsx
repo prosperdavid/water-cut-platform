@@ -88,7 +88,7 @@ function Inscription() {
         );
       } else if (donneesErreur?.email) {
         setErreur(
-          "L'adresse e-mail saisie n'est pas valide."
+          "L’adresse e-mail est invalide ou déjà utilisée."
         );
       } else {
         setErreur(

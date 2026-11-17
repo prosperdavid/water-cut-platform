@@ -10,6 +10,7 @@ from .views import (
     ProfilUtilisateurAPIView,
     HistoriqueUtilisateurAPIView,
 )
+from .serializers import EmailOrUsernameTokenObtainPairSerializer
 
 
 urlpatterns = [
@@ -21,7 +22,9 @@ urlpatterns = [
 
     path(
         "login/",
-        TokenObtainPairView.as_view(),
+        TokenObtainPairView.as_view(
+            serializer_class=EmailOrUsernameTokenObtainPairSerializer
+        ),
         name="login"
     ),
 

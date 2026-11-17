@@ -206,6 +206,8 @@ GET  /api/auth/me/
 GET  /api/auth/history/
 ```
 
+Pour `POST /api/auth/login/`, le champ `username` accepte soit le nom d’utilisateur, soit l’adresse e-mail du compte, avec le mot de passe habituel. Une adresse e-mail ne peut être utilisée que par un seul compte.
+
 ### Connexion Google
 
 La configuration du bouton et de la vérification serveur est décrite dans [docs/connexion-google.md](docs/connexion-google.md).

@@ -15,7 +15,6 @@ import {
   ArrowRight,
   LogIn,
   UserPlus,
-  Radio,
 } from "lucide-react";
 
 function Vitrine() {
@@ -61,11 +60,6 @@ function Vitrine() {
   backgroundImage: `linear-gradient(rgba(6, 37, 68, 0.48), rgba(6, 65, 120, 0.42)), url(${toliaraMer})`,
 }}
  >
-  <div className="hero-badge">
-          <Radio size={16} />
-          Plateforme participative à Toliara
-        </div>
-
         <h1>
           Suivez les coupures d'eau
           <span> dans votre quartier</span>
@@ -115,7 +109,6 @@ function Vitrine() {
         <strong>Toliara</strong>
       </div>
 
-      <div className="map-live-badge">Aperçu · données de démonstration</div>
     </div>
 
     <div className="landing-map-body">
